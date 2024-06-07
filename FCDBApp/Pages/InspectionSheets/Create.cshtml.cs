@@ -86,6 +86,9 @@ namespace FCDBApi.Pages.InspectionSheets
 
                 InspectionTable.Details = details;
 
+                // Set SubmissionTime
+                InspectionTable.SubmissionTime = DateTime.Now;
+
                 await _inspectionSheetService.CreateInspectionSheetAsync(InspectionTable);
 
                 _logger.LogInformation($"Inspection sheet created: InspectionID={InspectionTable.InspectionID}");

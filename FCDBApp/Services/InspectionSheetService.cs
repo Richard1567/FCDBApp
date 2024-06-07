@@ -82,6 +82,8 @@ namespace FCDBApp.Services
 
         public async Task CreateInspectionSheetAsync(InspectionTableDto inspectionDto)
         {
+            inspectionDto.SubmissionTime = DateTime.Now; // Ensure SubmissionTime is set here
+
             var inspectionTable = new InspectionTable
             {
                 InspectionID = inspectionDto.InspectionID,
@@ -90,7 +92,7 @@ namespace FCDBApp.Services
                 VehicleType = inspectionDto.VehicleType,
                 InspectionDate = inspectionDto.InspectionDate,
                 NextInspectionDue = inspectionDto.NextInspectionDue,
-                SubmissionTime = DateTime.Now, // Ensure SubmissionTime is set here
+                SubmissionTime = inspectionDto.SubmissionTime,
                 InspectionTypeID = inspectionDto.InspectionTypeID,
                 Details = inspectionDto.Details.Select(d => new InspectionDetails
                 {
@@ -188,7 +190,6 @@ namespace FCDBApp.Services
 
         public async Task<List<InspectionCategoryDto>> GetInspectionCategoriesWithItemsForTypeAsync(int inspectionTypeId)
         {
-            // Fetch the categories and their items for the given inspection type ID
             var categories = await _context.InspectionCategories
                 .Include(c => c.Items)
                 .Where(c => c.Items.Any(i => i.InspectionTypeID == inspectionTypeId))
@@ -209,6 +210,5 @@ namespace FCDBApp.Services
 
             return categories;
         }
-
     }
 }
