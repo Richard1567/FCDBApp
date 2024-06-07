@@ -1,0 +1,71 @@
+﻿@page "{id:guid}/{inspectionTypeId:int}"
+@model FCDBApi.Pages.InspectionSheets.DeleteModel
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Delete</h1>
+
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>InspectionTable</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.InspectionTable.Branch)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.InspectionTable.Branch)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.InspectionTable.VehicleReg)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.InspectionTable.VehicleReg)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.InspectionTable.VehicleType)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.InspectionTable.VehicleType)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.InspectionTable.InspectionDate)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.InspectionTable.InspectionDate)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.InspectionTable.NextInspectionDue)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.InspectionTable.NextInspectionDue)
+        </dd>
+        <dt class="col-sm-2">
+            Inspection Details
+        </dt>
+        <dd class="col-sm-10">
+            <ul>
+                @foreach (var detail in Model.InspectionTable.Details)
+                {
+                    <li>
+                        @detail.InspectionItemID - Result: @detail.Result
+                        @if (!string.IsNullOrEmpty(detail.Comments))
+                        {
+                            <br />
+                            <strong>Comments:</strong> @detail.Comments
+                        }
+                    </li>
+                }
+            </ul>
+        </dd>
+    </dl>
+
+    <form method="post">
+        <input type="hidden" asp-for="InspectionTable.InspectionID" />
+        <input type="hidden" asp-for="InspectionTypeId" />
+        <input type="submit" value="Delete" class="btn btn-danger" /> |
+        <a asp-page="Index">Cancel</a>
+    </form>
+</div>

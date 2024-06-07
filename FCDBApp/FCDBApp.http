@@ -1,0 +1,6 @@
+@FCDBApp_HostAddress = http://localhost:5185
+
+GET {{FCDBApp_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

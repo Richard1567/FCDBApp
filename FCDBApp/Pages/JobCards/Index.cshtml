@@ -1,0 +1,109 @@
+﻿@page
+@model FCDBApi.Pages.JobCards.IndexModel
+
+@{
+    ViewData["Title"] = "Job Cards";
+}
+
+<h1>Job Cards</h1>
+
+<p>
+    <a asp-page="./Create" class="btn btn-primary">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.JobCard[0].JobNo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.JobCard[0].Site)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.JobCard[0].Engineer)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.JobCard[0].RegNo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.JobCard[0].CustOrderNo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.JobCard[0].Odometer)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.JobCard[0].Date)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.JobCard[0].Time)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.JobCard[0].Description)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.JobCard[0].PartsUsed)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.JobCard[0].RowVersion)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.JobCard)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.JobNo)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Site)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Engineer)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.RegNo)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CustOrderNo)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Odometer)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Date)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Time)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Description)
+                </td>
+                <td>
+                    @if (item.PartsUsed != null && item.PartsUsed.Count > 0)
+                    {
+                        <ul>
+                            @foreach (var part in item.PartsUsed)
+                            {
+                                <li>@part.Name (@part.Quantity)</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <span>No parts used</span>
+                    }
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.RowVersion)
+                </td>
+                <td>
+                    <a asp-page="./Edit" asp-route-id="@item.JobCardID">Edit</a> |
+                    <a asp-page="./Details" asp-route-id="@item.JobCardID">Details</a> |
+                    <a asp-page="./Delete" asp-route-id="@item.JobCardID">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

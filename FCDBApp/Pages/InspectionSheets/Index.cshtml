@@ -1,0 +1,61 @@
+﻿@page
+@model FCDBApi.Pages.InspectionSheets.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="./SelectInspectionType">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.InspectionTable[0].Branch)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.InspectionTable[0].VehicleReg)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.InspectionTable[0].VehicleType)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.InspectionTable[0].InspectionDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.InspectionTable[0].NextInspectionDue)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.InspectionTable)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Branch)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.VehicleReg)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.VehicleType)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.InspectionDate)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.NextInspectionDue)
+                </td>
+                <td>
+                    <a asp-page="./Edit" asp-route-id="@item.InspectionID">Edit</a> |
+                    <a asp-page="./Details" asp-route-id="@item.InspectionID">Details</a> |
+                    <a asp-page="./Delete" asp-route-id="@item.InspectionID" asp-route-inspectionTypeId="@item.InspectionTypeID">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

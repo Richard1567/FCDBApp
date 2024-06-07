@@ -1,0 +1,251 @@
+﻿@page "{id:guid}"
+@model FCDBApi.Pages.JobCards.EditModel
+
+@{
+    ViewData["Title"] = "Edit Job Card";
+}
+
+<h1>Edit Job Card</h1>
+
+<h4>Job Card</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form id="jobCardForm">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="JobCard.JobNo" class="control-label"></label>
+                <input asp-for="JobCard.JobNo" class="form-control" />
+                <span asp-validation-for="JobCard.JobNo" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="JobCard.Site" class="control-label"></label>
+                <input asp-for="JobCard.Site" class="form-control" />
+                <span asp-validation-for="JobCard.Site" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="JobCard.Engineer" class="control-label"></label>
+                <input asp-for="JobCard.Engineer" class="form-control" />
+                <span asp-validation-for="JobCard.Engineer" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="JobCard.RegNo" class="control-label"></label>
+                <input asp-for="JobCard.RegNo" class="form-control" />
+                <span asp-validation-for="JobCard.RegNo" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="JobCard.CustOrderNo" class="control-label"></label>
+                <input asp-for="JobCard.CustOrderNo" class="form-control" />
+                <span asp-validation-for="JobCard.CustOrderNo" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="JobCard.Odometer" class="control-label"></label>
+                <input asp-for="JobCard.Odometer" class="form-control" />
+                <span asp-validation-for="JobCard.Odometer" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="JobCard.Date" class="control-label"></label>
+                <input asp-for="JobCard.Date" class="form-control" type="date" />
+                <span asp-validation-for="JobCard.Date" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="JobCard.Time" class="control-label"></label>
+                <input asp-for="JobCard.Time" class="form-control" type="time" />
+                <span asp-validation-for="JobCard.Time" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="JobCard.Description" class="control-label"></label>
+                <textarea asp-for="JobCard.Description" class="form-control"></textarea>
+                <span asp-validation-for="JobCard.Description" class="text-danger"></span>
+            </div>
+
+            <h4>Parts Used</h4>
+            <div id="partsUsedContainer">
+                @for (int i = 0; i < Model.JobCard.PartsUsed.Count; i++)
+                {
+                    <div class="form-group part-used-item" data-index="@i">
+                        <div>
+                            <label asp-for="JobCard.PartsUsed[i].Name" class="control-label"></label>
+                            <input asp-for="JobCard.PartsUsed[i].Name" class="form-control" />
+                            <span asp-validation-for="JobCard.PartsUsed[i].Name" class="text-danger"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="JobCard.PartsUsed[i].PartNumber" class="control-label"></label>
+                            <input asp-for="JobCard.PartsUsed[i].PartNumber" class="form-control" />
+                            <span asp-validation-for="JobCard.PartsUsed[i].PartNumber" class="text-danger"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="JobCard.PartsUsed[i].Quantity" class="control-label"></label>
+                            <input asp-for="JobCard.PartsUsed[i].Quantity" class="form-control" />
+                            <span asp-validation-for="JobCard.PartsUsed[i].Quantity" class="text-danger"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="JobCard.PartsUsed[i].Category" class="control-label"></label>
+                            <input asp-for="JobCard.PartsUsed[i].Category" class="form-control" />
+                            <span asp-validation-for="JobCard.PartsUsed[i].Category" class="text-danger"></span>
+                        </div>
+
+                        <input type="hidden" asp-for="JobCard.PartsUsed[i].PartUsedID" />
+                        <input type="hidden" asp-for="JobCard.PartsUsed[i].JobCardID" />
+
+                        <button type="button" class="btn btn-danger remove-part-button">Remove</button>
+                    </div>
+                }
+            </div>
+
+            <input type="hidden" asp-for="JobCard.JobCardID" />
+            <input type="hidden" asp-for="JobCard.RowVersion" /> <!-- Include RowVersion -->
+
+            <button type="button" id="addPartButton" class="btn btn-secondary">Add Part</button>
+
+            <div class="form-group">
+                <button type="button" id="saveButton" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script type="text/javascript">
+        document.getElementById('addPartButton').addEventListener('click', function () {
+            var container = document.getElementById('partsUsedContainer');
+            var index = container.querySelectorAll('.part-used-item').length;
+            var template = `
+                        <div class="form-group part-used-item">
+                            <div>
+                                <label for="JobCard_PartsUsed_${index}__Name" class="control-label">Name</label>
+                                <input class="form-control" type="text" id="JobCard_PartsUsed_${index}__Name" name="JobCard.PartsUsed[${index}].Name">
+                            </div>
+                            <div>
+                                <label for="JobCard_PartsUsed_${index}__PartNumber" class="control-label">Part Number</label>
+                                <input class="form-control" type="text" id="JobCard_PartsUsed_${index}__PartNumber" name="JobCard.PartsUsed[${index}].PartNumber">
+                            </div>
+                            <div>
+                                <label for="JobCard_PartsUsed_${index}__Quantity" class="control-label">Quantity</label>
+                                <input class="form-control" type="number" id="JobCard_PartsUsed_${index}__Quantity" name="JobCard.PartsUsed[${index}].Quantity">
+                            </div>
+                            <div>
+                                <label for="JobCard_PartsUsed_${index}__Category" class="control-label">Category</label>
+                                <input class="form-control" type="text" id="JobCard_PartsUsed_${index}__Category" name="JobCard.PartsUsed[${index}].Category">
+                            </div>
+                            <input type="hidden" id="JobCard_PartsUsed_${index}__PartUsedID" name="JobCard.PartsUsed[${index}].PartUsedID" value="${newGuid()}">
+                            <input type="hidden" id="JobCard_PartsUsed_${index}__JobCardID" name="JobCard.PartsUsed[${index}].JobCardID" value="@Model.JobCard.JobCardID">
+                            <button type="button" class="btn btn-danger remove-part-button">Remove</button>
+                        </div>
+                    `;
+            container.insertAdjacentHTML('beforeend', template);
+            addRemoveButtonEvent();
+        });
+
+        document.getElementById('saveButton').addEventListener('click', async function () {
+            await saveJobCard();
+        });
+
+        async function saveJobCard() {
+            var form = document.getElementById('jobCardForm');
+            var formData = new FormData(form);
+            var jsonObject = {
+                JobCardID: "@Model.JobCard.JobCardID",
+                JobNo: "",
+                Site: "",
+                Engineer: "",
+                RegNo: "",
+                CustOrderNo: "",
+                Odometer: "",
+                Date: "",
+                Time: "",
+                SubmissionTime: "@Model.JobCard.SubmissionTime", // Preserve original SubmissionTime
+                Description: "",
+                PartsUsed: [],
+                RowVersion: ""
+            };
+
+            formData.forEach((value, key) => {
+                if (key.startsWith("JobCard.PartsUsed[")) {
+                    let partIndex = key.match(/\d+/)[0];
+                    let partKey = key.split('.').pop();
+                    jsonObject.PartsUsed[partIndex] = jsonObject.PartsUsed[partIndex] || {};
+                    jsonObject.PartsUsed[partIndex][partKey] = value;
+                } else if (key.startsWith("JobCard.")) {
+                    let jsonKey = key.replace('JobCard.', '');
+                    jsonObject[jsonKey] = value;
+                }
+            });
+
+            // Ensure RowVersion is correctly included and handled as base64
+            if (jsonObject.RowVersion) {
+                jsonObject.RowVersion = btoa(atob(jsonObject.RowVersion));
+            }
+
+            var jobCardId = '@Model.JobCard.JobCardID';
+            var url = `/api/JobCard/${jobCardId}`;
+
+            try {
+                // Fetch the existing data
+                let existingResponse = await fetch(url);
+                let existingData = await existingResponse.json();
+
+                // Preserve the original SubmissionTime from the server
+                jsonObject.SubmissionTime = existingData.submissionTime;
+
+                // Log existing data and new data
+                console.log('Existing Data:', existingData);
+                console.log('New Data:', jsonObject);
+
+                let response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(jsonObject)
+                });
+
+                if (response.ok) {
+                    window.location.href = '/JobCards/Index';
+                } else {
+                    let errorData = await response.json();
+                    console.error('Attempted to PUT Data:', jsonObject);  // Log the data being sent
+                    console.error('Error:', errorData);
+                    // Handle validation errors and display them on the form
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function addRemoveButtonEvent() {
+            document.querySelectorAll('.remove-part-button').forEach(button => {
+                button.addEventListener('click', function () {
+                    this.closest('.part-used-item').remove();
+                });
+            });
+        }
+
+        function newGuid() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        addRemoveButtonEvent();
+    </script>
+}
+
+
+
+
+

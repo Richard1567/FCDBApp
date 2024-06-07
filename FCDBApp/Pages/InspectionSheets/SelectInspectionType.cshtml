@@ -1,0 +1,33 @@
+﻿@page
+@model FCDBApi.Pages.InspectionSheets.SelectInspectionTypeModel
+@{
+    ViewData["Title"] = "Select Inspection Type";
+}
+
+<h2>Select Inspection Type</h2>
+
+<form method="post">
+    <div class="form-group">
+        <label for="inspectionType">Inspection Type</label>
+        <select id="inspectionType" name="SelectedInspectionType" class="form-control" asp-for="SelectedInspectionType">
+            <option value="">Select an inspection type</option>
+            @foreach (var type in Model.InspectionTypes)
+            {
+                <option value="@type.InspectionTypeID">@type.TypeName</option>
+            }
+        </select>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Next" class="btn btn-primary" />
+    </div>
+</form>
+
+@if (Model.SelectedInspectionType > 0)
+{
+    var selectedType = Model.InspectionTypes.FirstOrDefault(t => t.InspectionTypeID == Model.SelectedInspectionType);
+    <p>You have selected: @selectedType?.TypeName (@Model.SelectedInspectionType)</p>
+}
+
+<div>
+    <a asp-page="Index">Back to List</a>
+</div>

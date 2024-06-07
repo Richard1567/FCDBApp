@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34902.65
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FCDBApi", "FCDBApp\FCDBApi.csproj", "{E51D364D-F741-4CD1-ACD5-0E9BC1BCEA57}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E51D364D-F741-4CD1-ACD5-0E9BC1BCEA57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E51D364D-F741-4CD1-ACD5-0E9BC1BCEA57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E51D364D-F741-4CD1-ACD5-0E9BC1BCEA57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E51D364D-F741-4CD1-ACD5-0E9BC1BCEA57}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B2F98136-E30B-4DDA-9386-13BCF9101676}
+	EndGlobalSection
+EndGlobal
