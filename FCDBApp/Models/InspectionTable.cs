@@ -90,6 +90,7 @@ namespace FCDBApp.Models
         public int InspectionItemID { get; set; }
         public string ItemDescription { get; set; }
         public int CategoryID { get; set; }
+        public string InspectionTypeIndicator { get; set; }
         public int InspectionTypeID { get; set; }
     }
 

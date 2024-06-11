@@ -82,7 +82,12 @@ namespace FCDBApp.Services
 
         public async Task CreateInspectionSheetAsync(InspectionTableDto inspectionDto)
         {
-            inspectionDto.SubmissionTime = DateTime.Now; // Ensure SubmissionTime is set here
+            if (inspectionDto.InspectionTypeID == null)
+            {
+                throw new ArgumentNullException(nameof(inspectionDto.InspectionTypeID), "InspectionTypeID cannot be null.");
+            }
+
+            inspectionDto.SubmissionTime = DateTime.Now;
 
             var inspectionTable = new InspectionTable
             {
@@ -107,6 +112,8 @@ namespace FCDBApp.Services
             _context.InspectionTables.Add(inspectionTable);
             await _context.SaveChangesAsync();
         }
+
+
 
         public async Task UpdateInspectionSheetAsync(InspectionTableDto inspectionDto)
         {
@@ -190,25 +197,39 @@ namespace FCDBApp.Services
 
         public async Task<List<InspectionCategoryDto>> GetInspectionCategoriesWithItemsForTypeAsync(int inspectionTypeId)
         {
+            _logger.LogInformation($"Fetching categories for inspection type ID containing: {inspectionTypeId}");
+
+            var inspectionTypeIdString = inspectionTypeId.ToString();
             var categories = await _context.InspectionCategories
                 .Include(c => c.Items)
-                .Where(c => c.Items.Any(i => i.InspectionTypeID == inspectionTypeId))
+                .Where(c => c.Items.Any(i => EF.Functions.Like(i.InspectionTypeIndicator, "%" + inspectionTypeIdString + "%")))
                 .Select(c => new InspectionCategoryDto
                 {
                     CategoryID = c.CategoryID,
                     CategoryName = c.CategoryName,
                     Items = c.Items
-                        .Where(i => i.InspectionTypeID == inspectionTypeId)
+                        .Where(i => EF.Functions.Like(i.InspectionTypeIndicator, "%" + inspectionTypeIdString + "%"))
                         .Select(i => new InspectionItemDto
                         {
                             InspectionItemID = i.InspectionItemID,
                             ItemDescription = i.ItemDescription,
                             CategoryID = i.CategoryID,
-                            InspectionTypeID = i.InspectionTypeID
+                            InspectionTypeIndicator = i.InspectionTypeIndicator
                         }).ToList()
                 }).ToListAsync();
 
+            if (categories == null || !categories.Any())
+            {
+                _logger.LogWarning("No categories found for the provided inspection type ID.");
+            }
+            else
+            {
+                _logger.LogInformation($"Fetched {categories.Count} categories for inspection type ID containing: {inspectionTypeId}");
+            }
+
             return categories;
         }
+
+
     }
 }
