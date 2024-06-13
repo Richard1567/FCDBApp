@@ -22,9 +22,9 @@ namespace FCDBApi.Pages.InspectionSheets
         }
 
         [BindProperty]
-        public InspectionTableDto InspectionTable { get; set; }
+        public InspectionTable InspectionTable { get; set; }
 
-        public List<InspectionCategoryDto> InspectionCategories { get; set; }
+        public List<InspectionCategories> InspectionCategories { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public int InspectionTypeId { get; set; }
@@ -44,7 +44,7 @@ namespace FCDBApi.Pages.InspectionSheets
 
             _logger.LogInformation($"Fetched {InspectionCategories.Count} categories");
 
-            InspectionTable = new InspectionTableDto
+            InspectionTable = new InspectionTable
             {
                 InspectionTypeID = InspectionTypeId
             };
@@ -60,35 +60,61 @@ namespace FCDBApi.Pages.InspectionSheets
             {
                 if (!ModelState.IsValid)
                 {
+                    _logger.LogWarning("Model state is invalid.");
                     return Page();
                 }
 
-                _logger.LogInformation($"Creating new InspectionTable with ID: {InspectionTable.InspectionID}");
+                var inspectionID = Guid.NewGuid();
+                _logger.LogInformation($"Generated new InspectionID: {inspectionID}");
 
-                // Re-fetch InspectionCategories on POST
-                InspectionCategories = await _inspectionSheetService.GetInspectionCategoriesWithItemsForTypeAsync(InspectionTypeId);
-                if (InspectionCategories == null)
+                var details = new List<InspectionDetails>();
+
+                foreach (var key in Request.Form.Keys.Where(k => k.StartsWith("InspectionTable.Details[")))
                 {
-                    _logger.LogError("InspectionCategories is null in OnPostAsync.");
-                    throw new ArgumentNullException(nameof(InspectionCategories), "InspectionCategories is null.");
+                    var itemId = int.Parse(key.Split('[', ']')[1]);
+                    var existingDetail = details.FirstOrDefault(d => d.InspectionItemID == itemId);
+
+                    if (existingDetail == null)
+                    {
+                        details.Add(new InspectionDetails
+                        {
+                            InspectionItemID = itemId,
+                            Result = Request.Form[key].FirstOrDefault() ?? "n",
+                            Comments = Request.Form[$"InspectionTable.Details[{itemId}].Comments"].FirstOrDefault() ?? string.Empty,
+                            InspectionID = inspectionID
+                        });
+                    }
+                    else
+                    {
+                        if (key.EndsWith(".Result"))
+                        {
+                            existingDetail.Result = Request.Form[key].FirstOrDefault() ?? "n";
+                        }
+                        else if (key.EndsWith(".Comments"))
+                        {
+                            existingDetail.Comments = Request.Form[key].FirstOrDefault() ?? string.Empty;
+                        }
+                    }
                 }
 
-                var details = InspectionCategories.SelectMany(c => c.Items
-                    .Where(i => i.InspectionTypeID == InspectionTypeId)
-                    .Select(i => new InspectionDetailsDto
+                if (details.Any())
+                {
+                    foreach (var detail in details)
                     {
-                        InspectionItemID = i.InspectionItemID,
-                        Result = Request.Form[$"InspectionTable.Details[{i.InspectionItemID}].Result"].FirstOrDefault() ?? "n",
-                        Comments = Request.Form[$"InspectionTable.Details[{i.InspectionItemID}].Comments"].FirstOrDefault() ?? string.Empty
-                    })).ToList();
+                        _logger.LogInformation($"ItemID={detail.InspectionItemID}, Result={detail.Result}, Comments={detail.Comments}");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("No details found after form binding.");
+                }
 
-                _logger.LogInformation($"Details after form binding: {string.Join(", ", details.Select(d => $"ItemID={d.InspectionItemID}, Result={d.Result}, Comments={d.Comments}"))}");
-
+                InspectionTable.InspectionID = inspectionID;
                 InspectionTable.Details = details;
 
                 await _inspectionSheetService.CreateInspectionSheetAsync(InspectionTable);
 
-                _logger.LogInformation($"Inspection sheet created: InspectionID={InspectionTable.InspectionID}");
+                _logger.LogInformation($"Inspection sheet created: InspectionID={inspectionID}");
 
                 return RedirectToPage("./Index");
             }
@@ -105,5 +131,11 @@ namespace FCDBApi.Pages.InspectionSheets
                 return Page();
             }
         }
+
+
+
+
+
+
     }
 }

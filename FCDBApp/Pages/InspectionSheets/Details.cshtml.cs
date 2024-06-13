@@ -38,7 +38,7 @@ namespace FCDBApi.Pages.InspectionSheets
 
             _logger.LogInformation($"Inspection sheet found: {InspectionTable}");
 
-            CategoriesWithItems = await _inspectionSheetService.GetInspectionCategoriesWithItemsForTypeAsync(InspectionTable.InspectionTypeID);
+            CategoriesWithItems = await _inspectionSheetService.GetInspectionCategoriesDtoWithItemsForTypeAsync(InspectionTable.InspectionTypeID);
 
             _logger.LogInformation($"Categories with items: {string.Join(", ", CategoriesWithItems.Select(c => c.CategoryName))}");
 

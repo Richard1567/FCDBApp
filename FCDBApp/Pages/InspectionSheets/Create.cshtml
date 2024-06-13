@@ -11,7 +11,7 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form method="post">
+        <form method="post" onsubmit="handleFormSubmit(event)">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="InspectionTable.Branch" class="control-label"></label>
@@ -57,20 +57,18 @@
                                         @foreach (var item in categoryItems)
                                         {
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" value="y" id="item_@item.InspectionItemID" name="InspectionTable.Details[@item.InspectionItemID].Result" @(Model.InspectionTable.Details?.Any(d => d.InspectionItemID == item.InspectionItemID && d.Result == "y") == true ? "checked" : "")>
-                                                <input type="hidden" value="n" name="InspectionTable.Details[@item.InspectionItemID].ResultUnchecked">
+                                                <input class="form-check-input" type="checkbox" value="y" id="item_@item.InspectionItemID" name="InspectionTable.Details[@item.InspectionItemID].Result" />
                                                 <label class="form-check-label" for="item_@item.InspectionItemID">@item.ItemDescription</label>
                                             </div>
                                             <div class="form-group">
                                                 <label for="comments_@item.InspectionItemID">Comments</label>
-                                                <textarea class="form-control" id="comments_@item.InspectionItemID" name="InspectionTable.Details[@item.InspectionItemID].Comments">@Model.InspectionTable.Details?.FirstOrDefault(d => d.InspectionItemID == item.InspectionItemID)?.Comments</textarea>
+                                                <textarea class="form-control" id="comments_@item.InspectionItemID" name="InspectionTable.Details[@item.InspectionItemID].Comments"></textarea>
                                             </div>
                                         }
                                     </div>
                                 </div>
                             }
                         }
-
                     }
                     else
                     {
@@ -94,4 +92,21 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        function handleFormSubmit(event) {
+            // Get all checkboxes and their corresponding hidden fields
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+
+            checkboxes.forEach(checkbox => {
+                if (!checkbox.checked) {
+                    // If the checkbox is not checked, ensure a hidden field with "n" is added
+                    const hiddenField = document.createElement('input');
+                    hiddenField.type = 'hidden';
+                    hiddenField.name = checkbox.name;
+                    hiddenField.value = 'n';
+                    checkbox.form.appendChild(hiddenField);
+                }
+            });
+        }
+    </script>
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FCDBApp.Models
 {
@@ -23,12 +24,13 @@ namespace FCDBApp.Models
     {
         [Key]
         public int InspectionDetailID { get; set; }
+
+        [ForeignKey("InspectionTable")]
         public Guid InspectionID { get; set; }
         public int InspectionItemID { get; set; }
         public string Result { get; set; }
         public string Comments { get; set; }
 
-        // Navigation properties should not be included in the payload
         public InspectionTable Inspection { get; set; }
         public InspectionItems Item { get; set; }
     }
@@ -41,6 +43,7 @@ namespace FCDBApp.Models
         public string ItemDescription { get; set; }
         public string InspectionTypeIndicator { get; set; }
         public int InspectionTypeID { get; set; }
+
         public InspectionCategories Category { get; set; }
         public InspectionType InspectionType { get; set; }
     }
@@ -50,6 +53,7 @@ namespace FCDBApp.Models
         [Key]
         public int CategoryID { get; set; }
         public string CategoryName { get; set; }
+
         public ICollection<InspectionItems> Items { get; set; }
     }
 
@@ -59,8 +63,10 @@ namespace FCDBApp.Models
         public int InspectionTypeID { get; set; }
         public string TypeName { get; set; }
         public string Frequency { get; set; }
+
         public ICollection<InspectionItems> Items { get; set; }
     }
+
 
     // DTO classes for data transfer and local storage
     public class InspectionTableDto

@@ -25,7 +25,15 @@ namespace FCDBApp.Models
             modelBuilder.Entity<InspectionTable>().HasKey(t => t.InspectionID);
             modelBuilder.Entity<JobCard>().HasKey(j => j.JobCardID);
             modelBuilder.Entity<PartUsed>().HasKey(p => p.PartUsedID);
-
+            modelBuilder.Entity<InspectionTable>()
+           .HasMany(i => i.Details)
+           .WithOne(d => d.Inspection)
+           .HasForeignKey(d => d.InspectionID);
+            modelBuilder.Entity<InspectionDetails>()
+           .HasKey(d => d.InspectionDetailID);
+            modelBuilder.Entity<InspectionDetails>()
+                .Property(d => d.InspectionDetailID)
+                .ValueGeneratedOnAdd();
             // Configure relationships for InspectionDetails entity
             modelBuilder.Entity<InspectionDetails>()
                 .HasOne(d => d.Inspection)

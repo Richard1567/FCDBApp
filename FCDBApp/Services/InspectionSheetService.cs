@@ -80,39 +80,36 @@ namespace FCDBApp.Services
             };
         }
 
-        public async Task CreateInspectionSheetAsync(InspectionTableDto inspectionDto)
+        public async Task CreateInspectionSheetAsync(InspectionTable inspectionTable)
         {
-            if (inspectionDto.InspectionTypeID == null)
+            if (inspectionTable.InspectionTypeID == null)
             {
-                throw new ArgumentNullException(nameof(inspectionDto.InspectionTypeID), "InspectionTypeID cannot be null.");
+                throw new ArgumentNullException(nameof(inspectionTable.InspectionTypeID), "InspectionTypeID cannot be null.");
             }
 
-            inspectionDto.SubmissionTime = DateTime.Now;
+            inspectionTable.SubmissionTime = DateTime.Now;
 
-            var inspectionTable = new InspectionTable
+            _logger.LogInformation("Creating inspection sheet with type ID: {InspectionTypeID}", inspectionTable.InspectionTypeID);
+
+            try
             {
-                InspectionID = inspectionDto.InspectionID,
-                Branch = inspectionDto.Branch,
-                VehicleReg = inspectionDto.VehicleReg,
-                VehicleType = inspectionDto.VehicleType,
-                InspectionDate = inspectionDto.InspectionDate,
-                NextInspectionDue = inspectionDto.NextInspectionDue,
-                SubmissionTime = inspectionDto.SubmissionTime,
-                InspectionTypeID = inspectionDto.InspectionTypeID,
-                Details = inspectionDto.Details.Select(d => new InspectionDetails
+                _context.InspectionTables.Add(inspectionTable);
+
+                foreach (var detail in inspectionTable.Details)
                 {
-                    InspectionDetailID = d.InspectionDetailID,
-                    InspectionID = d.InspectionID,
-                    InspectionItemID = d.InspectionItemID,
-                    Result = d.Result,
-                    Comments = d.Comments
-                }).ToList()
-            };
+                    _logger.LogInformation("Adding detail to context: {Detail}", detail);
+                    _context.InspectionDetails.Add(detail);
+                }
 
-            _context.InspectionTables.Add(inspectionTable);
-            await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Inspection sheet created successfully with ID: {InspectionID}", inspectionTable.InspectionID);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating inspection sheet");
+                throw;
+            }
         }
-
 
 
         public async Task UpdateInspectionSheetAsync(InspectionTableDto inspectionDto)
@@ -195,7 +192,28 @@ namespace FCDBApp.Services
             return await _context.InspectionTypes.ToListAsync();
         }
 
-        public async Task<List<InspectionCategoryDto>> GetInspectionCategoriesWithItemsForTypeAsync(int inspectionTypeId)
+        public async Task<List<InspectionCategories>> GetInspectionCategoriesWithItemsForTypeAsync(int inspectionTypeId)
+        {
+            _logger.LogInformation($"Fetching categories for inspection type ID containing: {inspectionTypeId}");
+
+            var inspectionTypeIdString = inspectionTypeId.ToString();
+            var categories = await _context.InspectionCategories
+                .Include(c => c.Items)
+                .Where(c => c.Items.Any(i => EF.Functions.Like(i.InspectionTypeIndicator, "%" + inspectionTypeIdString + "%")))
+                .ToListAsync();
+
+            if (categories == null || !categories.Any())
+            {
+                _logger.LogWarning("No categories found for the provided inspection type ID.");
+            }
+            else
+            {
+                _logger.LogInformation($"Fetched {categories.Count} categories for inspection type ID containing: {inspectionTypeId}");
+            }
+
+            return categories;
+        }
+        public async Task<List<InspectionCategoryDto>> GetInspectionCategoriesDtoWithItemsForTypeAsync(int inspectionTypeId)
         {
             _logger.LogInformation($"Fetching categories for inspection type ID containing: {inspectionTypeId}");
 

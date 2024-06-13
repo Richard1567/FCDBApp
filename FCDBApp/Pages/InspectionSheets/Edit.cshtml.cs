@@ -38,7 +38,7 @@ namespace FCDBApi.Pages.InspectionSheets
 
             InspectionTypeId = InspectionTable.InspectionTypeID;
 
-            InspectionCategories = await _inspectionSheetService.GetInspectionCategoriesWithItemsForTypeAsync(InspectionTypeId);
+            InspectionCategories = await _inspectionSheetService.GetInspectionCategoriesDtoWithItemsForTypeAsync(InspectionTypeId);
 
             return Page();
         }
