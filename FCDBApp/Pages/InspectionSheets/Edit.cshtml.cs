@@ -56,75 +56,79 @@ namespace FCDBApi.Pages.InspectionSheets
 
         public async Task<IActionResult> OnPostAsync()
         {
-            _logger.LogInformation("OnPostAsync started.");
-
-            if (!ModelState.IsValid)
-            {
-                _logger.LogWarning("Model state is invalid.");
-                return Page();
-            }
-
-            _logger.LogInformation("Model state is valid. Processing details...");
-
-            var processedDetails = new List<InspectionDetailsDto>();
-
-            foreach (var key in Request.Form.Keys)
-            {
-                _logger.LogInformation($"Form key: {key}, Value: {Request.Form[key]}");
-
-                if (key.StartsWith("InspectionTable.Details[") && key.EndsWith("].InspectionItemID"))
-                {
-                    var index = key.Substring(23, key.IndexOf("].InspectionItemID") - 23);
-                    var itemID = int.Parse(Request.Form[key]);
-
-                    var resultKey = $"InspectionTable.Details[{index}].Result";
-                    var result = Request.Form[resultKey].FirstOrDefault() == "y" ? "y" : "n"; // Assign "y" if checked, otherwise "n"
-
-                    var comments = Request.Form[$"InspectionTable.Details[{index}].Comments"].FirstOrDefault() ?? "";
-
-                    _logger.LogInformation($"Processed detail: ItemID={itemID}, Result={result}, Comments={comments}");
-
-                    processedDetails.Add(new InspectionDetailsDto
-                    {
-                        InspectionItemID = itemID,
-                        Result = result,
-                        Comments = comments
-                    });
-                }
-            }
-
-            if (processedDetails.Count == 0)
-            {
-                _logger.LogWarning("No processed details found.");
-            }
-
-            InspectionTable.Details = processedDetails;
-
-            _logger.LogInformation($"InspectionTable ID before update: {InspectionTable.InspectionID}");
-
             try
             {
-                _logger.LogInformation("Calling UpdateInspectionSheetDtoAsync...");
+                if (!ModelState.IsValid)
+                {
+                    _logger.LogWarning("Model state is invalid.");
+                    return Page();
+                }
+
+                var details = new List<InspectionDetailsDto>();
+
+                foreach (var key in Request.Form.Keys.Where(k => k.StartsWith("InspectionTable.Details[")))
+                {
+                    var itemId = int.Parse(key.Split('[', ']')[1]);
+                    var existingDetail = details.FirstOrDefault(d => d.InspectionItemID == itemId);
+
+                    if (existingDetail == null)
+                    {
+                        details.Add(new InspectionDetailsDto
+                        {
+                            InspectionItemID = itemId,
+                            Result = Request.Form[key].FirstOrDefault() ?? "n",
+                            Comments = Request.Form[$"InspectionTable.Details[{itemId}].Comments"].FirstOrDefault() ?? string.Empty,
+                            InspectionID = InspectionTable.InspectionID
+                        });
+                    }
+                    else
+                    {
+                        if (key.EndsWith(".Result"))
+                        {
+                            existingDetail.Result = Request.Form[key].FirstOrDefault() ?? "n";
+                        }
+                        else if (key.EndsWith(".Comments"))
+                        {
+                            existingDetail.Comments = Request.Form[key].FirstOrDefault() ?? string.Empty;
+                        }
+                    }
+                }
+
+                if (details.Any())
+                {
+                    foreach (var detail in details)
+                    {
+                        _logger.LogInformation($"ItemID={detail.InspectionItemID}, Result={detail.Result}, Comments={detail.Comments}");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("No details found after form binding.");
+                }
+
+                InspectionTable.Details = details;
+
+                _logger.LogInformation($"InspectionTable ID before update: {InspectionTable.InspectionID}");
+
                 await _inspectionSheetService.UpdateInspectionSheetDtoAsync(InspectionTable);
+
+                _logger.LogInformation($"Inspection sheet updated: InspectionID={InspectionTable.InspectionID}");
+
+                return RedirectToPage("./Index");
             }
-            catch (DbUpdateConcurrencyException)
+            catch (ArgumentNullException ex)
             {
-                _logger.LogError("Concurrency conflict occurred.");
-                return StatusCode(409, "Concurrency conflict occurred. The entity was modified by another user.");
+                _logger.LogError(ex, "An error occurred while updating the inspection sheet: {Message}", ex.Message);
+                ModelState.AddModelError(string.Empty, "An error occurred while updating the inspection sheet. Please try again.");
+                return Page();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An unexpected error occurred while updating the inspection sheet.");
-                ModelState.AddModelError(string.Empty, $"An unexpected error occurred: {ex.Message}");
+                ModelState.AddModelError(string.Empty, "An unexpected error occurred while updating the inspection sheet. Please try again.");
                 return Page();
             }
-
-            _logger.LogInformation("Inspection sheet updated successfully.");
-            return RedirectToPage("./Index");
         }
-
-
-
 
 
     }
