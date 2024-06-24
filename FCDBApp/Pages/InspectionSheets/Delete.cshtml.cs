@@ -20,7 +20,7 @@ namespace FCDBApi.Pages.InspectionSheets
         }
 
         [BindProperty]
-        public InspectionTableDto InspectionTable { get; set; }
+        public InspectionTable InspectionTable { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public int InspectionTypeId { get; set; }

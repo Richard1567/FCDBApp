@@ -51,9 +51,10 @@
                     @Html.DisplayFor(modelItem => item.NextInspectionDue)
                 </td>
                 <td>
-                    <a asp-page="./Edit" asp-route-id="@item.InspectionID">Edit</a> |
-                    <a asp-page="./Details" asp-route-id="@item.InspectionID">Details</a> |
-                    <a asp-page="./Delete" asp-route-id="@item.InspectionID" asp-route-inspectionTypeId="@item.InspectionTypeID">Delete</a>
+                    <a asp-page="/InspectionSheets/Details" asp-route-id="@item.InspectionID" asp-route-inspectionTypeId="@item.InspectionTypeID">Details</a>
+                    <a asp-page="/InspectionSheets/Edit" asp-route-id="@item.InspectionID" asp-route-inspectionTypeId="@item.InspectionTypeID">Edit</a>
+                    <a asp-page="/InspectionSheets/Delete" asp-route-id="@item.InspectionID" asp-route-inspectionTypeId="@item.InspectionTypeID">Delete</a>
+
                 </td>
             </tr>
         }

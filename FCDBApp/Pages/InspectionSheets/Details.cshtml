@@ -1,74 +1,68 @@
-﻿@page "{id:guid}"
+﻿@page "{id:guid}/{inspectionTypeId:int}"
 @model FCDBApi.Pages.InspectionSheets.DetailsModel
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Inspection Details";
 }
 
-<h1>Details</h1>
+<h1>Inspection Details</h1>
 
-<div>
-    <h4>InspectionTable</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.InspectionTable.Branch)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.InspectionTable.Branch)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.InspectionTable.VehicleReg)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.InspectionTable.VehicleReg)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.InspectionTable.VehicleType)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.InspectionTable.VehicleType)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.InspectionTable.InspectionDate)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.InspectionTable.InspectionDate)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.InspectionTable.NextInspectionDue)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.InspectionTable.NextInspectionDue)
-        </dd>
-    </dl>
-
-    <h4>Inspection Items</h4>
-    <div id="inspectionItems">
-        @if (Model.CategoriesWithItems != null && Model.CategoriesWithItems.Any())
-        {
-            foreach (var category in Model.CategoriesWithItems)
-            {
-                <div class="category">
-                    <h5>@category.CategoryName</h5>
-                    <div class="items">
-                        @foreach (var item in category.Items)
-                        {
-                            <div>
-                                <strong>@item.ItemDescription</strong> - Result: @Model.InspectionTable.Details.FirstOrDefault(d => d.InspectionItemID == item.InspectionItemID)?.Result
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-        }
-        else
-        {
-            <p>No inspection items available for the selected type.</p>
-        }
+<h4>InspectionTable</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <dl class="row">
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.InspectionTable.Branch)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.InspectionTable.Branch)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.InspectionTable.VehicleReg)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.InspectionTable.VehicleReg)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.InspectionTable.VehicleType)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.InspectionTable.VehicleType)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.InspectionTable.InspectionDate)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.InspectionTable.InspectionDate)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.InspectionTable.NextInspectionDue)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.InspectionTable.NextInspectionDue)
+            </dd>
+            <dt class="col-sm-2">
+                Inspection Details
+            </dt>
+            <dd class="col-sm-10">
+                <ul>
+                    @foreach (var detail in Model.InspectionTable.Details)
+                    {
+                        <li>
+                            @detail.InspectionItemID - Result: @detail.Result
+                            @if (!string.IsNullOrEmpty(detail.Comments))
+                            {
+                                <br />
+                                <strong>Comments:</strong> @detail.Comments
+                            }
+                        </li>
+                    }
+                </ul>
+            </dd>
+        </dl>
     </div>
 </div>
-
 <div>
-    <a asp-page="./Index">Back to List</a>
+    <a asp-page="Index">Back to List</a>
 </div>

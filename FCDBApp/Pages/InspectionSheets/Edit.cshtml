@@ -1,11 +1,11 @@
-﻿@page "{id:guid}"
+﻿@page "{id:guid}/{inspectionTypeId:int}"
 @model FCDBApi.Pages.InspectionSheets.EditModel
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Edit Inspection Sheet";
 }
 
-<h1>Edit</h1>
+<h1>Edit Inspection Sheet</h1>
 
 <h4>InspectionTable</h4>
 <hr />
@@ -38,31 +38,40 @@
                 <input asp-for="InspectionTable.NextInspectionDue" class="form-control" />
                 <span asp-validation-for="InspectionTable.NextInspectionDue" class="text-danger"></span>
             </div>
+            <input type="hidden" asp-for="InspectionTable.InspectionID" />
+
+            <input type="hidden" asp-for="InspectionTable.InspectionTypeID" />
 
             <div>
                 <h4>Inspection Items</h4>
                 <div id="inspectionItems">
                     @if (Model.InspectionCategories != null && Model.InspectionCategories.Any())
                     {
-                        foreach (var category in Model.InspectionCategories)
+                        @foreach (var category in Model.InspectionCategories)
                         {
-                            <div class="category">
-                                <h5>@category.CategoryName</h5>
-                                <div class="items">
-                                    @foreach (var item in category.Items)
-                                    {
-                                        if (item.InspectionTypeID == Model.InspectionTypeId)
+                            var categoryItems = category.Items.ToList();
+                            if (categoryItems.Any())
+                            {
+                                <div class="category">
+                                    <h5>@category.CategoryName</h5>
+                                    <div class="items">
+                                        @foreach (var item in categoryItems)
                                         {
+                                            var detail = Model.InspectionTable.Details.FirstOrDefault(d => d.InspectionItemID == item.InspectionItemID);
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" value="y" id="item_@item.InspectionItemID" name="InspectionTable.Details[@item.InspectionItemID].Result" @(Model.InspectionTable.Details.Any(d => d.InspectionItemID == item.InspectionItemID && d.Result == "y") ? "checked" : "")>
-                                                <input type="hidden" value="n" name="InspectionTable.Details[@item.InspectionItemID].ResultUnchecked">
+                                                <input type="hidden" name="InspectionTable.Details[@item.InspectionItemID].InspectionItemID" value="@item.InspectionItemID" />
+                                                
+                                                <input class="form-check-input" type="checkbox" value="y" id="item_@item.InspectionItemID" name="InspectionTable.Details[@item.InspectionItemID].Result" @(detail?.Result == "y" ? "checked" : "") />
                                                 <label class="form-check-label" for="item_@item.InspectionItemID">@item.ItemDescription</label>
-                                                <input type="text" class="form-control" id="comments_@item.InspectionItemID" name="InspectionTable.Details[@item.InspectionItemID].Comments" placeholder="Comments" value="@(Model.InspectionTable.Details.FirstOrDefault(d => d.InspectionItemID == item.InspectionItemID)?.Comments)">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="comments_@item.InspectionItemID">Comments</label>
+                                                <textarea class="form-control" id="comments_@item.InspectionItemID" name="InspectionTable.Details[@item.InspectionItemID].Comments">@detail?.Comments</textarea>
                                             </div>
                                         }
-                                    }
+                                    </div>
                                 </div>
-                            </div>
+                            }
                         }
                     }
                     else
@@ -74,6 +83,7 @@
 
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
+                <a asp-page="Index" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>

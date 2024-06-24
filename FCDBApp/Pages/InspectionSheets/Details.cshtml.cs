@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using FCDBApp.Models;
+﻿using FCDBApp.Models;
 using FCDBApp.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
 
 namespace FCDBApi.Pages.InspectionSheets
 {
@@ -21,10 +19,10 @@ namespace FCDBApi.Pages.InspectionSheets
             _logger = logger;
         }
 
-        public InspectionTableDto InspectionTable { get; set; }
-        public List<InspectionCategoryDto> CategoriesWithItems { get; set; }
+        public InspectionTable InspectionTable { get; set; }
+        public List<InspectionCategories> CategoriesWithItems { get; set; }
 
-        public async Task<IActionResult> OnGetAsync(Guid id)
+        public async Task<IActionResult> OnGetAsync(Guid id, int inspectionTypeId)
         {
             _logger.LogInformation($"Fetching inspection sheet with ID: {id}");
 
@@ -36,9 +34,7 @@ namespace FCDBApi.Pages.InspectionSheets
                 return NotFound();
             }
 
-            _logger.LogInformation($"Inspection sheet found: {InspectionTable}");
-
-            CategoriesWithItems = await _inspectionSheetService.GetInspectionCategoriesDtoWithItemsForTypeAsync(InspectionTable.InspectionTypeID);
+            CategoriesWithItems = await _inspectionSheetService.GetInspectionCategoriesWithItemsForTypeAsync(inspectionTypeId);
 
             _logger.LogInformation($"Categories with items: {string.Join(", ", CategoriesWithItems.Select(c => c.CategoryName))}");
 
