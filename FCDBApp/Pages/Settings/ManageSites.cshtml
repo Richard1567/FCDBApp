@@ -1,0 +1,27 @@
+﻿@page
+@model FCDBApi.Pages.Settings.ManageSitesModel
+@{
+    ViewData["Title"] = "Manage Sites";
+}
+
+<h1>Manage Sites</h1>
+<form method="post">
+    <div class="form-group">
+        <label for="newSiteName">New Site Name</label>
+        <input type="text" id="newSiteName" name="newSiteName" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Add Site</button>
+</form>
+
+<hr />
+
+<h2>Existing Sites</h2>
+<ul>
+    @foreach (var site in Model.Sites)
+    {
+        <li>
+            @site.SiteName
+            <a asp-page="EditSite" asp-route-id="@site.SiteID">Edit</a>
+        </li>
+    }
+</ul>

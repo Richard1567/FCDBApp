@@ -1,0 +1,64 @@
+﻿@page
+@model FCDBApi.Pages.Settings.UploadDocumentsModel
+@{
+    ViewData["Title"] = "Upload Documents";
+}
+
+<h1>Upload Documents</h1>
+
+<form method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="form-group">
+        <label asp-for="DocumentName" class="control-label"></label>
+        <input asp-for="DocumentName" class="form-control" />
+        <span asp-validation-for="DocumentName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Notes" class="control-label"></label>
+        <textarea asp-for="Notes" class="form-control"></textarea>
+        <span asp-validation-for="Notes" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="SelectedCategory" class="control-label">Category</label>
+        <select asp-for="SelectedCategory" class="form-control" id="categoryDropdown" onchange="handleCategoryChange(event)">
+            <option value="">-- Select Category --</option>
+            @foreach (var category in Model.DocumentCategories)
+            {
+                <option value="@category.DocumentCategoryID">@category.CategoryName</option>
+            }
+            <option value="AddNew">Add New</option>
+        </select>
+        <span asp-validation-for="SelectedCategory" class="text-danger"></span>
+    </div>
+
+    <div class="form-group" id="newCategoryDiv" style="display:none;">
+        <label for="newCategoryName">New Category Name</label>
+        <input type="text" id="newCategoryName" name="newCategoryName" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Upload" class="control-label"></label>
+        <input type="file" asp-for="Upload" class="form-control" />
+        <span asp-validation-for="Upload" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <input type="submit" value="Upload" class="btn btn-primary" />
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        function handleCategoryChange(event) {
+            const newCategoryDiv = document.getElementById('newCategoryDiv');
+            if (event.target.value === "AddNew") {
+                newCategoryDiv.style.display = 'block';
+            } else {
+                newCategoryDiv.style.display = 'none';
+            }
+        }
+    </script>
+}

@@ -17,6 +17,8 @@ namespace FCDBApp.Models
         public DbSet<JobCard> JobCards { get; set; }
         public DbSet<PartUsed> PartsUsed { get; set; }
         public DbSet<Site> Sites { get; set; }
+        public DbSet<Document> Documents { get; set; }
+        public DbSet<DocumentCategory> DocumentCategories { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Define primary keys for each entity
@@ -70,7 +72,20 @@ namespace FCDBApp.Models
                     .IsRequired()
                     .HasDefaultValueSql("GETDATE()");
             });
-                modelBuilder.Entity<Site>().HasData(
+            // New configuration for Document and DocumentCategory
+            modelBuilder.Entity<DocumentCategory>()
+                .HasKey(dc => dc.DocumentCategoryID);
+
+            modelBuilder.Entity<Document>()
+                .HasKey(d => d.DocumentID);
+
+            modelBuilder.Entity<Document>()
+                .HasOne(d => d.DocumentCategory)
+                .WithMany(dc => dc.Documents)
+                .HasForeignKey(d => d.DocumentCategoryID);
+
+
+            modelBuilder.Entity<Site>().HasData(
         new Site { SiteID = 1, SiteName = "Birmingham Loomis" },
         new Site { SiteID = 2, SiteName = "Colchester Loomis" },
         new Site { SiteID = 3, SiteName = "Dagenham Loomis" },

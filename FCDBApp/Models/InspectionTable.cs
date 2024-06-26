@@ -115,4 +115,24 @@ namespace FCDBApp.Models
         public int SiteID { get; set; }
         public string SiteName { get; set; }
     }
+
+    public class Document
+    {
+        public int DocumentID { get; set; }
+        public string DocumentName { get; set; }
+        public string DocumentPath { get; set; }
+        public DateTime UploadDate { get; set; }
+        public int DocumentCategoryID { get; set; }
+        public DocumentCategory DocumentCategory { get; set; }
+        public string? Notes { get; set; }
+    }
+
+
+    public class DocumentCategory
+    {
+        public int DocumentCategoryID { get; set; }
+        public string CategoryName { get; set; }
+        public ICollection<Document> Documents { get; set; }
+    }
+
 }
