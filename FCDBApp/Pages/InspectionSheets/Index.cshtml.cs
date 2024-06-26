@@ -18,11 +18,13 @@ namespace FCDBApi.Pages.InspectionSheets
             _context = context;
         }
 
-        public IList<InspectionTable> InspectionTable { get;set; } = default!;
+        public IList<InspectionTable> InspectionTable { get; set; } = default!;
+        public Dictionary<int, string> SiteNames { get; set; }
 
         public async Task OnGetAsync()
         {
             InspectionTable = await _context.InspectionTables.ToListAsync();
+            SiteNames = await _context.Sites.ToDictionaryAsync(s => s.SiteID, s => s.SiteName);
         }
     }
 }

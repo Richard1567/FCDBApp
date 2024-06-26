@@ -13,11 +13,35 @@
     <div class="col-md-4">
         <form method="post" onsubmit="handleFormSubmit(event)">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
             <div class="form-group">
                 <label asp-for="InspectionTable.Branch" class="control-label"></label>
-                <input asp-for="InspectionTable.Branch" class="form-control" />
+                @if (Model.Sites != null && Model.Sites.Any())
+                {
+                    <select asp-for="InspectionTable.Branch" class="form-control" asp-items="@(new SelectList(Model.Sites, "SiteName", "SiteName"))" id="branchDropdown" onchange="handleBranchChange(event)">
+                        <option value="">-- Select Branch --</option>
+                        <option value="AddNew">Add New</option>
+                    </select>
+                }
+                else
+                {
+                    <select asp-for="InspectionTable.Branch" class="form-control" id="branchDropdown" onchange="handleBranchChange(event)">
+                        <option value="">No branches available</option>
+                        <option value="AddNew">Add New</option>
+                    </select>
+                }
                 <span asp-validation-for="InspectionTable.Branch" class="text-danger"></span>
             </div>
+
+            <!-- New Branch TextBox -->
+            <div class="form-group" id="newBranchDiv" style="display:none;">
+                <label for="newBranchName">New Branch Name</label>
+                <input type="text" id="newBranchName" name="newBranchName" class="form-control" />
+            </div>
+
+            <!-- Hidden SiteID Field -->
+            <input type="hidden" asp-for="InspectionTable.SiteID" />
+
             <div class="form-group">
                 <label asp-for="InspectionTable.VehicleReg" class="control-label"></label>
                 <input asp-for="InspectionTable.VehicleReg" class="form-control" />
@@ -40,6 +64,7 @@
             </div>
 
             <input type="hidden" asp-for="InspectionTable.InspectionTypeID" />
+            <input type="hidden" asp-for="InspectionTable.SubmissionTime" value="@DateTime.Now" />
 
             <div>
                 <h4>Inspection Items</h4>
@@ -76,6 +101,15 @@
                     }
                 </div>
             </div>
+            <div class="form-group">
+                <label asp-for="InspectionTable.PassFailStatus" class="control-label"></label>
+                <select asp-for="InspectionTable.PassFailStatus" class="form-control">
+                    <option value="Pass">Pass</option>
+                    <option value="Fail">Fail</option>
+                </select>
+                <span asp-validation-for="InspectionTable.PassFailStatus" class="text-danger"></span>
+            </div>
+
 
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
@@ -107,6 +141,15 @@
                     checkbox.form.appendChild(hiddenField);
                 }
             });
+        }
+
+        function handleBranchChange(event) {
+            const newBranchDiv = document.getElementById('newBranchDiv');
+            if (event.target.value === "AddNew") {
+                newBranchDiv.style.display = 'block';
+            } else {
+                newBranchDiv.style.display = 'none';
+            }
         }
     </script>
 }

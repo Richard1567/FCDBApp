@@ -12,45 +12,54 @@
     <h4>InspectionTable</h4>
     <hr />
     <dl class="row">
-        <dt class="col-sm-2">
+        <dt class="col-sm-3">
             @Html.DisplayNameFor(model => model.InspectionTable.Branch)
         </dt>
-        <dd class="col-sm-10">
+        <dd class="col-sm-9">
             @Html.DisplayFor(model => model.InspectionTable.Branch)
         </dd>
-        <dt class="col-sm-2">
+        <dt class="col-sm-3">
             @Html.DisplayNameFor(model => model.InspectionTable.VehicleReg)
         </dt>
-        <dd class="col-sm-10">
+        <dd class="col-sm-9">
             @Html.DisplayFor(model => model.InspectionTable.VehicleReg)
         </dd>
-        <dt class="col-sm-2">
+        <dt class="col-sm-3">
             @Html.DisplayNameFor(model => model.InspectionTable.VehicleType)
         </dt>
-        <dd class="col-sm-10">
+        <dd class="col-sm-9">
             @Html.DisplayFor(model => model.InspectionTable.VehicleType)
         </dd>
-        <dt class="col-sm-2">
+        <dt class="col-sm-3">
             @Html.DisplayNameFor(model => model.InspectionTable.InspectionDate)
         </dt>
-        <dd class="col-sm-10">
+        <dd class="col-sm-9">
             @Html.DisplayFor(model => model.InspectionTable.InspectionDate)
         </dd>
-        <dt class="col-sm-2">
+        <dt class="col-sm-3">
             @Html.DisplayNameFor(model => model.InspectionTable.NextInspectionDue)
         </dt>
-        <dd class="col-sm-10">
+        <dd class="col-sm-9">
             @Html.DisplayFor(model => model.InspectionTable.NextInspectionDue)
         </dd>
-        <dt class="col-sm-2">
+        <dt class="col-sm-3">
+            @Html.DisplayNameFor(model => model.InspectionTable.PassFailStatus)
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.InspectionTable.PassFailStatus)
+        </dd>
+        <dt class="col-sm-3">
             Inspection Details
         </dt>
-        <dd class="col-sm-10">
+        <dd class="col-sm-9">
             <ul>
                 @foreach (var detail in Model.InspectionTable.Details)
                 {
+                    var itemName = Model.CategoriesWithItems
+                    .SelectMany(c => c.Items)
+                    .FirstOrDefault(i => i.InspectionItemID == detail.InspectionItemID)?.ItemDescription;
                     <li>
-                        @detail.InspectionItemID - Result: @detail.Result
+                        @itemName - Result: @detail.Result
                         @if (!string.IsNullOrEmpty(detail.Comments))
                         {
                             <br />
@@ -66,6 +75,6 @@
         <input type="hidden" asp-for="InspectionTable.InspectionID" />
         <input type="hidden" asp-for="InspectionTypeId" />
         <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-page="Index">Cancel</a>
+        <a asp-page="Index" class="btn btn-secondary">Cancel</a>
     </form>
 </div>

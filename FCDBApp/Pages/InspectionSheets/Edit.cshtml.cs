@@ -15,17 +15,20 @@ namespace FCDBApi.Pages.InspectionSheets
     {
         private readonly InspectionSheetService _inspectionSheetService;
         private readonly ILogger<EditModel> _logger;
+        private readonly InspectionContext _context;
 
-        public EditModel(InspectionSheetService inspectionSheetService, ILogger<EditModel> logger)
+        public EditModel(InspectionSheetService inspectionSheetService, ILogger<EditModel> logger, InspectionContext context)
         {
             _inspectionSheetService = inspectionSheetService;
             _logger = logger;
+            _context = context;
         }
 
         [BindProperty]
         public InspectionTableDto InspectionTable { get; set; }
 
         public List<InspectionCategoryDto> InspectionCategories { get; set; }
+        public List<Site> Sites { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public int InspectionTypeId { get; set; }
@@ -35,21 +38,21 @@ namespace FCDBApi.Pages.InspectionSheets
             _logger.LogInformation($"OnGetAsync called with id: {id} and inspectionTypeId: {inspectionTypeId}");
 
             InspectionTable = await _inspectionSheetService.GetInspectionSheetDtoByIdAsync(id);
-
             if (InspectionTable == null)
             {
                 _logger.LogWarning($"InspectionTable is null for id: {id}");
                 return NotFound();
             }
 
-            _logger.LogInformation($"Fetched InspectionTable: ID = {InspectionTable.InspectionID}, InspectionTypeID = {InspectionTable.InspectionTypeID}");
-
             InspectionTypeId = inspectionTypeId;
-
-            _logger.LogInformation("Fetching InspectionCategories...");
             InspectionCategories = await _inspectionSheetService.GetInspectionCategoriesDtoWithItemsForTypeAsync(InspectionTypeId);
+            Sites = await _context.Sites.ToListAsync();
 
-            _logger.LogInformation($"Fetched {InspectionCategories.Count} InspectionCategories");
+            if (Sites == null || !Sites.Any())
+            {
+                _logger.LogWarning("No sites found.");
+                Sites = new List<Site>();
+            }
 
             return Page();
         }
@@ -60,20 +63,72 @@ namespace FCDBApi.Pages.InspectionSheets
             {
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("Model state is invalid.");
+                    foreach (var modelState in ModelState.Values)
+                    {
+                        foreach (var error in modelState.Errors)
+                        {
+                            _logger.LogWarning($"Model state error: {error.ErrorMessage}");
+                        }
+                    }
                     return Page();
                 }
 
-                var details = new List<InspectionDetailsDto>();
+                string newSiteName = Request.Form["newBranchName"];
+                if (!string.IsNullOrWhiteSpace(newSiteName))
+                {
+                    var newSite = new Site { SiteName = newSiteName };
+                    _context.Sites.Add(newSite);
+                    await _context.SaveChangesAsync();
+                    InspectionTable.SiteID = newSite.SiteID;
+                    InspectionTable.Branch = newSiteName;
+                    _logger.LogInformation($"New site created with SiteID: {newSite.SiteID}");
+                }
+                else
+                {
+                    string branchName = Request.Form["InspectionTable.Branch"];
+                    var selectedSite = await _context.Sites.FirstOrDefaultAsync(s => s.SiteName == branchName);
+                    if (selectedSite != null)
+                    {
+                        InspectionTable.SiteID = selectedSite.SiteID;
+                        InspectionTable.Branch = branchName;
+                        _logger.LogInformation($"Existing site selected with SiteID: {selectedSite.SiteID}");
+                    }
+                    else
+                    {
+                        _logger.LogError($"Failed to find SiteID for branch: {branchName}");
+                        ModelState.AddModelError("InspectionTable.SiteID", "Invalid Branch.");
+                        return Page();
+                    }
+                }
 
+                // Get the existing inspection table with details
+                var inspectionTable = await _context.InspectionTables.Include(it => it.Details).FirstOrDefaultAsync(it => it.InspectionID == InspectionTable.InspectionID);
+                if (inspectionTable == null)
+                {
+                    _logger.LogError($"InspectionTable not found for ID: {InspectionTable.InspectionID}");
+                    ModelState.AddModelError(string.Empty, "Inspection not found.");
+                    return Page();
+                }
+
+                // Map basic fields
+                inspectionTable.SiteID = InspectionTable.SiteID;
+                inspectionTable.Branch = InspectionTable.Branch;
+                inspectionTable.VehicleReg = InspectionTable.VehicleReg;
+                inspectionTable.VehicleType = InspectionTable.VehicleType;
+                inspectionTable.InspectionDate = InspectionTable.InspectionDate;
+                inspectionTable.NextInspectionDue = InspectionTable.NextInspectionDue;
+                inspectionTable.PassFailStatus = InspectionTable.PassFailStatus;
+
+                // Map details
+                var details = new List<InspectionDetails>();
                 foreach (var key in Request.Form.Keys.Where(k => k.StartsWith("InspectionTable.Details[")))
                 {
                     var itemId = int.Parse(key.Split('[', ']')[1]);
-                    var existingDetail = details.FirstOrDefault(d => d.InspectionItemID == itemId);
+                    var existingDetail = inspectionTable.Details.FirstOrDefault(d => d.InspectionItemID == itemId);
 
                     if (existingDetail == null)
                     {
-                        details.Add(new InspectionDetailsDto
+                        details.Add(new InspectionDetails
                         {
                             InspectionItemID = itemId,
                             Result = Request.Form[key].FirstOrDefault() ?? "n",
@@ -91,36 +146,30 @@ namespace FCDBApi.Pages.InspectionSheets
                         {
                             existingDetail.Comments = Request.Form[key].FirstOrDefault() ?? string.Empty;
                         }
+                        details.Add(existingDetail);
                     }
                 }
 
-                if (details.Any())
+                // Remove old details not present in the form
+                var detailsList = inspectionTable.Details.ToList();
+                detailsList.RemoveAll(d => !details.Any(nd => nd.InspectionItemID == d.InspectionItemID));
+                inspectionTable.Details = detailsList;
+
+                // Add new details that are not in the existing list
+                foreach (var detail in details)
                 {
-                    foreach (var detail in details)
+                    if (!inspectionTable.Details.Any(d => d.InspectionItemID == detail.InspectionItemID))
                     {
-                        _logger.LogInformation($"ItemID={detail.InspectionItemID}, Result={detail.Result}, Comments={detail.Comments}");
+                        inspectionTable.Details.Add(detail);
                     }
                 }
-                else
-                {
-                    _logger.LogWarning("No details found after form binding.");
-                }
 
-                InspectionTable.Details = details;
+                _context.Update(inspectionTable);
+                await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"InspectionTable ID before update: {InspectionTable.InspectionID}");
-
-                await _inspectionSheetService.UpdateInspectionSheetDtoAsync(InspectionTable);
-
-                _logger.LogInformation($"Inspection sheet updated: InspectionID={InspectionTable.InspectionID}");
+                _logger.LogInformation($"Inspection sheet updated successfully with SiteID: {inspectionTable.SiteID} and Branch: {inspectionTable.Branch}");
 
                 return RedirectToPage("./Index");
-            }
-            catch (ArgumentNullException ex)
-            {
-                _logger.LogError(ex, "An error occurred while updating the inspection sheet: {Message}", ex.Message);
-                ModelState.AddModelError(string.Empty, "An error occurred while updating the inspection sheet. Please try again.");
-                return Page();
             }
             catch (Exception ex)
             {
@@ -129,6 +178,9 @@ namespace FCDBApi.Pages.InspectionSheets
                 return Page();
             }
         }
+
+
+
 
 
     }

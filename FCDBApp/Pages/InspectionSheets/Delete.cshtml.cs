@@ -24,40 +24,37 @@ namespace FCDBApi.Pages.InspectionSheets
 
         [BindProperty(SupportsGet = true)]
         public int InspectionTypeId { get; set; }
-
+        public List<InspectionCategories> CategoriesWithItems { get; set; }
         public async Task<IActionResult> OnGetAsync(Guid id, int inspectionTypeId)
         {
-            _logger.LogInformation($"OnGetAsync called with id: {id} and inspectionTypeId: {inspectionTypeId}");
+            _logger.LogInformation($"Fetching inspection sheet with ID: {id}");
 
-            InspectionTypeId = inspectionTypeId;
-
-            _logger.LogInformation("Fetching InspectionTable...");
             InspectionTable = await _inspectionSheetService.GetInspectionSheetByIdAsync(id);
 
             if (InspectionTable == null)
             {
-                _logger.LogWarning("InspectionTable is null");
-                return RedirectToPage("./Index");
-            }
-
-            if (InspectionTable.InspectionTypeID != InspectionTypeId)
-            {
-                _logger.LogWarning("InspectionTypeID does not match");
-                return RedirectToPage("./Index");
-            }
-
-            _logger.LogInformation("InspectionTable fetched successfully");
-            return Page();
-        }
-
-        public async Task<IActionResult> OnPostAsync()
-        {
-            if (InspectionTable == null || InspectionTable.InspectionID == Guid.Empty)
-            {
+                _logger.LogWarning($"Inspection sheet with ID: {id} not found.");
                 return NotFound();
             }
 
-            await _inspectionSheetService.DeleteInspectionSheetAsync(InspectionTable.InspectionID);
+            InspectionTypeId = inspectionTypeId;
+
+            // Fetch categories with items
+            CategoriesWithItems = await _inspectionSheetService.GetInspectionCategoriesWithItemsForTypeAsync(inspectionTypeId);
+
+            _logger.LogInformation($"Categories with items: {string.Join(", ", CategoriesWithItems.Select(c => c.CategoryName))}");
+
+            return Page();
+        }
+
+
+        public async Task<IActionResult> OnPostAsync(Guid id)
+        {
+            _logger.LogInformation($"Deleting inspection sheet with ID: {id}");
+
+            await _inspectionSheetService.DeleteInspectionSheetAsync(id);
+
+            _logger.LogInformation($"Inspection sheet with ID: {id} deleted successfully.");
 
             return RedirectToPage("./Index");
         }

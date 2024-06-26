@@ -6,6 +6,7 @@ using FCDBApp.Models;
 using FCDBApp.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace FCDBApi.Pages.InspectionSheets
@@ -14,17 +15,20 @@ namespace FCDBApi.Pages.InspectionSheets
     {
         private readonly InspectionSheetService _inspectionSheetService;
         private readonly ILogger<CreateModel> _logger;
+        private readonly InspectionContext _context;
 
-        public CreateModel(InspectionSheetService inspectionSheetService, ILogger<CreateModel> logger)
+        public CreateModel(InspectionSheetService inspectionSheetService, ILogger<CreateModel> logger, InspectionContext context)
         {
             _inspectionSheetService = inspectionSheetService;
             _logger = logger;
+            _context = context;
         }
 
         [BindProperty]
         public InspectionTable InspectionTable { get; set; }
 
         public List<InspectionCategories> InspectionCategories { get; set; }
+        public List<Site> Sites { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public int InspectionTypeId { get; set; }
@@ -35,6 +39,7 @@ namespace FCDBApi.Pages.InspectionSheets
             InspectionTypeId = inspectionTypeId;
 
             InspectionCategories = await _inspectionSheetService.GetInspectionCategoriesWithItemsForTypeAsync(InspectionTypeId);
+            Sites = await _context.Sites.ToListAsync();
 
             if (InspectionCategories == null || !InspectionCategories.Any())
             {
@@ -61,11 +66,49 @@ namespace FCDBApi.Pages.InspectionSheets
                 if (!ModelState.IsValid)
                 {
                     _logger.LogWarning("Model state is invalid.");
+
+                    foreach (var modelState in ModelState)
+                    {
+                        foreach (var error in modelState.Value.Errors)
+                        {
+                            _logger.LogError($"Key: {modelState.Key}, Error: {error.ErrorMessage}");
+                        }
+                    }
+
                     return Page();
                 }
+                _logger.LogInformation($"Form submission time: {Request.Form["InspectionTable.SubmissionTime"]}");
+                InspectionTable.InspectionID = Guid.NewGuid();
+                _logger.LogInformation($"Generated new InspectionID: {InspectionTable.InspectionID}");
 
-                var inspectionID = Guid.NewGuid();
-                _logger.LogInformation($"Generated new InspectionID: {inspectionID}");
+                var branch = Request.Form["InspectionTable.Branch"].FirstOrDefault();
+                if (branch == "AddNew")
+                {
+                    var newBranchName = Request.Form["newBranchName"].FirstOrDefault();
+                    if (!string.IsNullOrWhiteSpace(newBranchName))
+                    {
+                        var newSite = new Site { SiteName = newBranchName };
+                        _context.Sites.Add(newSite);
+                        await _context.SaveChangesAsync();
+                        InspectionTable.SiteID = newSite.SiteID;
+                        InspectionTable.Branch = newBranchName;
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("InspectionTable.Branch", "New branch name cannot be empty.");
+                        return Page();
+                    }
+                }
+                else
+                {
+                    var site = await _context.Sites.FirstOrDefaultAsync(s => s.SiteName == branch);
+                    if (site == null)
+                    {
+                        throw new Exception($"Site not found for Branch: {branch}");
+                    }
+                    InspectionTable.SiteID = site.SiteID;
+                    InspectionTable.Branch = branch;
+                }
 
                 var details = new List<InspectionDetails>();
 
@@ -81,7 +124,7 @@ namespace FCDBApi.Pages.InspectionSheets
                             InspectionItemID = itemId,
                             Result = Request.Form[key].FirstOrDefault() ?? "n",
                             Comments = Request.Form[$"InspectionTable.Details[{itemId}].Comments"].FirstOrDefault() ?? string.Empty,
-                            InspectionID = inspectionID
+                            InspectionID = InspectionTable.InspectionID
                         });
                     }
                     else
@@ -109,12 +152,15 @@ namespace FCDBApi.Pages.InspectionSheets
                     _logger.LogWarning("No details found after form binding.");
                 }
 
-                InspectionTable.InspectionID = inspectionID;
                 InspectionTable.Details = details;
+                InspectionTable.PassFailStatus = Request.Form["InspectionTable.PassFailStatus"].FirstOrDefault();
+
+                // Set the SubmissionTime property
+                InspectionTable.SubmissionTime = DateTime.Now;
 
                 await _inspectionSheetService.CreateInspectionSheetAsync(InspectionTable);
 
-                _logger.LogInformation($"Inspection sheet created: InspectionID={inspectionID}");
+                _logger.LogInformation($"Inspection sheet created: InspectionID={InspectionTable.InspectionID}");
 
                 return RedirectToPage("./Index");
             }
@@ -131,11 +177,6 @@ namespace FCDBApi.Pages.InspectionSheets
                 return Page();
             }
         }
-
-
-
-
-
 
     }
 }

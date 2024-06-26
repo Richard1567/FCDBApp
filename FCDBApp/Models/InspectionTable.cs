@@ -14,10 +14,12 @@ namespace FCDBApp.Models
         public string VehicleType { get; set; }
         public DateTime InspectionDate { get; set; }
         public DateTime NextInspectionDue { get; set; }
-        public DateTime SubmissionTime { get; set; }
+        public DateTime SubmissionTime { get; set; } = DateTime.Now;
         public int InspectionTypeID { get; set; }
+        public int? SiteID { get; set; }
 
         public ICollection<InspectionDetails> Details { get; set; } = new List<InspectionDetails>();
+        public string PassFailStatus { get; set; }
     }
 
     public class InspectionDetails
@@ -77,9 +79,11 @@ namespace FCDBApp.Models
         public string VehicleType { get; set; }
         public DateTime InspectionDate { get; set; }
         public DateTime NextInspectionDue { get; set; }
-        public DateTime SubmissionTime { get; set; }
+        public DateTime SubmissionTime { get; set; } = DateTime.Now;
         public int InspectionTypeID { get; set; }
+        public int? SiteID { get; set; }
         public ICollection<InspectionDetailsDto> Details { get; set; } = new List<InspectionDetailsDto>();
+        public string PassFailStatus { get; set; }
     }
 
     public class InspectionDetailsDto
@@ -105,5 +109,10 @@ namespace FCDBApp.Models
         public int CategoryID { get; set; }
         public string CategoryName { get; set; }
         public List<InspectionItemDto> Items { get; set; } = new List<InspectionItemDto>();
+    }
+    public class Site
+    {
+        public int SiteID { get; set; }
+        public string SiteName { get; set; }
     }
 }

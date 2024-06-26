@@ -14,7 +14,7 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.InspectionTable[0].Branch)
+                Branch
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.InspectionTable[0].VehicleReg)
@@ -28,6 +28,9 @@
             <th>
                 @Html.DisplayNameFor(model => model.InspectionTable[0].NextInspectionDue)
             </th>
+            <th>
+                @Html.DisplayNameFor(model => model.InspectionTable[0].PassFailStatus)
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -36,7 +39,16 @@
         {
             <tr>
                 <td>
-                    @Html.DisplayFor(modelItem => item.Branch)
+                    @{
+                        if (item.SiteID.HasValue && Model.SiteNames.TryGetValue(item.SiteID.Value, out var siteName))
+                        {
+                            @siteName
+                        }
+                        else
+                        {
+                            @("Unknown Site")
+                        }
+                    }
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.VehicleReg)
@@ -51,10 +63,13 @@
                     @Html.DisplayFor(modelItem => item.NextInspectionDue)
                 </td>
                 <td>
+                    @Html.DisplayFor(modelItem => item.PassFailStatus)
+                </td>
+
+                <td>
                     <a asp-page="/InspectionSheets/Details" asp-route-id="@item.InspectionID" asp-route-inspectionTypeId="@item.InspectionTypeID">Details</a>
                     <a asp-page="/InspectionSheets/Edit" asp-route-id="@item.InspectionID" asp-route-inspectionTypeId="@item.InspectionTypeID">Edit</a>
                     <a asp-page="/InspectionSheets/Delete" asp-route-id="@item.InspectionID" asp-route-inspectionTypeId="@item.InspectionTypeID">Delete</a>
-
                 </td>
             </tr>
         }

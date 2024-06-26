@@ -15,9 +15,21 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="InspectionTable.Branch" class="control-label"></label>
-                <input asp-for="InspectionTable.Branch" class="form-control" />
+                <select asp-for="InspectionTable.Branch" class="form-control" id="branchDropdown" onchange="handleBranchChange(event)">
+                    <option value="">-- Select Branch --</option>
+                    @foreach (var site in Model.Sites)
+                    {
+                        <option value="@site.SiteName">@site.SiteName</option>
+                    }
+                    <option value="AddNew">Add New</option>
+                </select>
                 <span asp-validation-for="InspectionTable.Branch" class="text-danger"></span>
             </div>
+            <div class="form-group" id="newBranchDiv" style="display:none;">
+                <label for="newBranchName">New Branch Name</label>
+                <input type="text" id="newBranchName" name="newBranchName" class="form-control" />
+            </div>
+            <input type="hidden" asp-for="InspectionTable.SiteID" id="siteIDField" />
             <div class="form-group">
                 <label asp-for="InspectionTable.VehicleReg" class="control-label"></label>
                 <input asp-for="InspectionTable.VehicleReg" class="form-control" />
@@ -78,6 +90,14 @@
                     }
                 </div>
             </div>
+            <div class="form-group">
+                <label asp-for="InspectionTable.PassFailStatus" class="control-label"></label>
+                <select asp-for="InspectionTable.PassFailStatus" class="form-control">
+                    <option value="Pass">Pass</option>
+                    <option value="Fail">Fail</option>
+                </select>
+                <span asp-validation-for="InspectionTable.PassFailStatus" class="text-danger"></span>
+            </div>
 
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
@@ -94,18 +114,42 @@
 @section Scripts {
     <script>
         function handleFormSubmit(event) {
-            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const branchSelect = document.getElementById('branchDropdown');
+            const siteIDField = document.getElementById('siteIDField');
+            const branchNameField = document.getElementById('branchNameField');
+            const newSiteName = document.getElementById('newBranchName').value;
 
-            checkboxes.forEach(checkbox => {
-                if (!checkbox.checked) {
-                    const hiddenField = document.createElement('input');
-                    hiddenField.type = 'hidden';
-                    hiddenField.name = checkbox.name;
-                    hiddenField.value = 'n';
-                    checkbox.form.appendChild(hiddenField);
-                }
-            });
+            if (newSiteName) {
+                siteIDField.value = ''; // Ensure the site ID is empty if a new site is being added
+                branchNameField.value = newSiteName;
+            } else {
+                branchNameField.value = branchSelect.value;
+                const selectedOption = branchSelect.options[branchSelect.selectedIndex].text;
+                siteIDField.value = branchSelect.value; // Correctly set the site ID value
+            }
         }
+
+        function handleBranchChange(event) {
+            const newBranchDiv = document.getElementById('newBranchDiv');
+            if (event.target.value === "AddNew") {
+                newBranchDiv.style.display = 'block';
+            } else {
+                newBranchDiv.style.display = 'none';
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const branchDropdown = document.getElementById("branchDropdown");
+            const selectedBranch = "@Model.InspectionTable.Branch";
+            if (selectedBranch) {
+                for (let i = 0; i < branchDropdown.options.length; i++) {
+                    if (branchDropdown.options[i].text === selectedBranch) {
+                        branchDropdown.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        });
     </script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

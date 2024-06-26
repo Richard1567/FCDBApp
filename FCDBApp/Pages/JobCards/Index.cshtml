@@ -43,9 +43,7 @@
             <th>
                 @Html.DisplayNameFor(model => model.JobCard[0].PartsUsed)
             </th>
-            <th>
-                @Html.DisplayNameFor(model => model.JobCard[0].RowVersion)
-            </th>
+
             <th></th>
         </tr>
     </thead>
@@ -94,9 +92,6 @@
                     {
                         <span>No parts used</span>
                     }
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.RowVersion)
                 </td>
                 <td>
                     <a asp-page="./Edit" asp-route-id="@item.JobCardID">Edit</a> |

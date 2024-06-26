@@ -36,6 +36,7 @@ namespace FCDBApp.Services
                 NextInspectionDue = i.NextInspectionDue,
                 SubmissionTime = i.SubmissionTime,
                 InspectionTypeID = i.InspectionTypeID,
+                PassFailStatus = i.PassFailStatus,  
                 Details = i.Details
                             .Where(d => d.Item.InspectionTypeIndicator.Contains(i.InspectionTypeID.ToString()))
                             .Select(d => new InspectionDetailsDto
@@ -72,6 +73,7 @@ namespace FCDBApp.Services
                 NextInspectionDue = inspection.NextInspectionDue,
                 SubmissionTime = inspection.SubmissionTime,
                 InspectionTypeID = inspection.InspectionTypeID,
+                PassFailStatus = inspection.PassFailStatus, 
                 Details = inspection.Details.Select(d => new InspectionDetails
                 {
                     InspectionDetailID = d.InspectionDetailID,
@@ -98,9 +100,14 @@ namespace FCDBApp.Services
                 throw new ArgumentNullException(nameof(inspectionTable.InspectionTypeID), "InspectionTypeID cannot be null.");
             }
 
-            inspectionTable.SubmissionTime = DateTime.Now;
+            if (inspectionTable.SubmissionTime == DateTime.MinValue)
+            {
+                inspectionTable.SubmissionTime = DateTime.Now;
+                _logger.LogWarning("SubmissionTime was not set. Setting to current time: {SubmissionTime}", inspectionTable.SubmissionTime);
+            }
 
             _logger.LogInformation("Creating inspection sheet with type ID: {InspectionTypeID}", inspectionTable.InspectionTypeID);
+            _logger.LogInformation("SubmissionTime: {SubmissionTime}", inspectionTable.SubmissionTime);
 
             try
             {
@@ -123,6 +130,7 @@ namespace FCDBApp.Services
         }
 
 
+
         public async Task UpdateInspectionSheetAsync(InspectionTable inspectionTable)
         {
             try
@@ -143,7 +151,7 @@ namespace FCDBApp.Services
                 existingInspection.NextInspectionDue = inspectionTable.NextInspectionDue;
                 existingInspection.SubmissionTime = DateTime.Now;
                 existingInspection.InspectionTypeID = inspectionTable.InspectionTypeID;
-
+                existingInspection.PassFailStatus = inspectionTable.PassFailStatus;
                 var incomingDetails = inspectionTable.Details ?? new List<InspectionDetails>();
                 var existingDetails = existingInspection.Details.ToList();
 
@@ -292,6 +300,7 @@ namespace FCDBApp.Services
                 NextInspectionDue = inspection.NextInspectionDue,
                 SubmissionTime = inspection.SubmissionTime,
                 InspectionTypeID = inspection.InspectionTypeID,
+                PassFailStatus = inspection.PassFailStatus,
                 Details = inspection.Details.Select(d => new InspectionDetailsDto
                 {
                     InspectionDetailID = d.InspectionDetailID,
@@ -324,7 +333,7 @@ namespace FCDBApp.Services
                 existingInspection.NextInspectionDue = inspectionDto.NextInspectionDue;
                 existingInspection.SubmissionTime = DateTime.Now;
                 existingInspection.InspectionTypeID = inspectionDto.InspectionTypeID;
-
+                existingInspection.PassFailStatus = inspectionDto.PassFailStatus;   
                 var incomingDetails = inspectionDto.Details ?? new List<InspectionDetailsDto>();
                 var existingDetails = existingInspection.Details.ToList();
 
@@ -406,6 +415,7 @@ namespace FCDBApp.Services
                 NextInspectionDue = inspection.NextInspectionDue,
                 SubmissionTime = inspection.SubmissionTime,
                 InspectionTypeID = inspection.InspectionTypeID,
+                PassFailStatus = inspection.PassFailStatus, 
                 Details = filteredDetails.Select(d => new InspectionDetailsDto
                 {
                     InspectionDetailID = d.InspectionDetailID,

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Security.Policy;
 
 namespace FCDBApp.Models
 {
@@ -15,7 +16,7 @@ namespace FCDBApp.Models
         public DbSet<InspectionType> InspectionTypes { get; set; }
         public DbSet<JobCard> JobCards { get; set; }
         public DbSet<PartUsed> PartsUsed { get; set; }
-
+        public DbSet<Site> Sites { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Define primary keys for each entity
@@ -25,6 +26,7 @@ namespace FCDBApp.Models
             modelBuilder.Entity<InspectionTable>().HasKey(t => t.InspectionID);
             modelBuilder.Entity<JobCard>().HasKey(j => j.JobCardID);
             modelBuilder.Entity<PartUsed>().HasKey(p => p.PartUsedID);
+            modelBuilder.Entity<Site>().ToTable("Sites");
             modelBuilder.Entity<InspectionTable>()
            .HasMany(i => i.Details)
            .WithOne(d => d.Inspection)
@@ -60,10 +62,32 @@ namespace FCDBApp.Models
                 .IsRowVersion();
 
             // Additional configuration for entity properties if needed
-            modelBuilder.Entity<InspectionTable>()
-                .Property(t => t.SubmissionTime)
-                .HasDefaultValueSql("GETDATE()")
-                .ValueGeneratedOnAddOrUpdate();
+            modelBuilder.Entity<InspectionTable>(entity =>
+            {
+                entity.HasKey(e => e.InspectionID);
+
+                entity.Property(e => e.SubmissionTime)
+                    .IsRequired()
+                    .HasDefaultValueSql("GETDATE()");
+            });
+                modelBuilder.Entity<Site>().HasData(
+        new Site { SiteID = 1, SiteName = "Birmingham Loomis" },
+        new Site { SiteID = 2, SiteName = "Colchester Loomis" },
+        new Site { SiteID = 3, SiteName = "Dagenham Loomis" },
+        new Site { SiteID = 4, SiteName = "Dunstable Loomis" },
+        new Site { SiteID = 5, SiteName = "Edinburgh Loomis" },
+        new Site { SiteID = 6, SiteName = "Elgin Loomis" },
+        new Site { SiteID = 7, SiteName = "Exeter Loomis" },
+        new Site { SiteID = 8, SiteName = "Glasgow Loomis" },
+        new Site { SiteID = 9, SiteName = "Heathrow Loomis" },
+        new Site { SiteID = 10, SiteName = "Leeds Loomis" },
+        new Site { SiteID = 11, SiteName = "Maidstone Loomis" },
+        new Site { SiteID = 12, SiteName = "Manchester Loomis" },
+        new Site { SiteID = 13, SiteName = "Newcastle Loomis" },
+        new Site { SiteID = 14, SiteName = "Newport Loomis" },
+        new Site { SiteID = 15, SiteName = "Nottingham Loomis" },
+        new Site { SiteID = 16, SiteName = "Shepperton Loomis" }
+    );
 
             modelBuilder.Entity<InspectionCategories>().HasData(
                 new InspectionCategories { CategoryID = 1, CategoryName = "Load Mission Disc and Log to Vehicle" },
