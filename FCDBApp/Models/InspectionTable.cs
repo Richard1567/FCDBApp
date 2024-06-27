@@ -120,7 +120,8 @@ namespace FCDBApp.Models
     {
         public int DocumentID { get; set; }
         public string DocumentName { get; set; }
-        public string DocumentPath { get; set; }
+        public byte[] DocumentData { get; set; }  // Store binary data
+        public string ContentType { get; set; }  // Store the content type
         public DateTime UploadDate { get; set; }
         public int DocumentCategoryID { get; set; }
         public DocumentCategory DocumentCategory { get; set; }

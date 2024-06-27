@@ -90,5 +90,19 @@ namespace FCDBApi.Pages.Settings
 
             return RedirectToPage();
         }
+
+        public async Task<IActionResult> OnGetDownloadDocumentAsync(int id)
+        {
+            var document = await _context.Documents.FindAsync(id);
+            if (document == null)
+            {
+                return NotFound();
+            }
+
+            Response.Headers.Add("Content-Disposition", $"inline; filename={document.DocumentName}.pdf");
+            return File(document.DocumentData, "application/pdf");
+        }
+
+
     }
 }
