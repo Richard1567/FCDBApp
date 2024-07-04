@@ -32,6 +32,7 @@ namespace FCDBApp
                             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
                         services.AddScoped<InspectionSheetService>();
+                        services.AddTransient<ExportHandler>();
                     })
                     .Configure((context, app) =>
                     {

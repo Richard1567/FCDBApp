@@ -12,6 +12,7 @@ namespace FCDBApp.Models
         public string Branch { get; set; }
         public string VehicleReg { get; set; }
         public string VehicleType { get; set; }
+        public int Odometer { get; set; }
         public DateTime InspectionDate { get; set; }
         public DateTime NextInspectionDue { get; set; }
         public DateTime SubmissionTime { get; set; } = DateTime.Now;
@@ -77,6 +78,7 @@ namespace FCDBApp.Models
         public string Branch { get; set; }
         public string VehicleReg { get; set; }
         public string VehicleType { get; set; }
+        public int Odometer { get; set; }
         public DateTime InspectionDate { get; set; }
         public DateTime NextInspectionDue { get; set; }
         public DateTime SubmissionTime { get; set; } = DateTime.Now;
@@ -135,5 +137,26 @@ namespace FCDBApp.Models
         public string CategoryName { get; set; }
         public ICollection<Document> Documents { get; set; }
     }
+
+    public class TemplateFile
+    {
+        [Key]
+        public int TemplateID { get; set; }
+
+        [Required]
+        [StringLength(255)]
+        public string TemplateName { get; set; }
+
+        [Required]
+        public byte[] TemplateData { get; set; }
+
+        [Required]
+        [StringLength(255)]
+        public string ContentType { get; set; }
+
+        public DateTime UploadDate { get; set; } = DateTime.Now;
+    }
+
+
 
 }

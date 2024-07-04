@@ -62,6 +62,11 @@
                 <input asp-for="InspectionTable.NextInspectionDue" class="form-control" />
                 <span asp-validation-for="InspectionTable.NextInspectionDue" class="text-danger"></span>
             </div>
+            <div class="form-group">
+                <label asp-for="InspectionTable.Odometer" class="control-label"></label>
+                <input asp-for="InspectionTable.Odometer" class="form-control" />
+                <span asp-validation-for="InspectionTable.Odometer" class="text-danger"></span>
+            </div>
 
             <input type="hidden" asp-for="InspectionTable.InspectionTypeID" />
             <input type="hidden" asp-for="InspectionTable.SubmissionTime" value="@DateTime.Now" />

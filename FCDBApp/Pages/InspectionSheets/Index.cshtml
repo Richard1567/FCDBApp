@@ -70,6 +70,9 @@
                     <a asp-page="/InspectionSheets/Details" asp-route-id="@item.InspectionID" asp-route-inspectionTypeId="@item.InspectionTypeID">Details</a>
                     <a asp-page="/InspectionSheets/Edit" asp-route-id="@item.InspectionID" asp-route-inspectionTypeId="@item.InspectionTypeID">Edit</a>
                     <a asp-page="/InspectionSheets/Delete" asp-route-id="@item.InspectionID" asp-route-inspectionTypeId="@item.InspectionTypeID">Delete</a>
+                    <form method="post" asp-page-handler="Export" asp-route-inspectionId="@item.InspectionID" style="display:inline">
+                        <button type="submit" class="btn btn-primary">Export</button>
+                    </form>
                 </td>
             </tr>
         }

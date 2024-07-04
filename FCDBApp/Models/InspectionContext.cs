@@ -19,6 +19,7 @@ namespace FCDBApp.Models
         public DbSet<Site> Sites { get; set; }
         public DbSet<Document> Documents { get; set; }
         public DbSet<DocumentCategory> DocumentCategories { get; set; }
+        public DbSet<TemplateFile> TemplateFiles { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Define primary keys for each entity

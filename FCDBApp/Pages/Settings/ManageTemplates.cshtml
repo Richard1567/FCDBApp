@@ -1,0 +1,46 @@
+﻿@page
+@model FCDBApi.Pages.Settings.ManageTemplatesModel
+@{
+    ViewData["Title"] = "Manage Templates";
+}
+
+<h1>Manage Templates</h1>
+
+<form method="post" enctype="multipart/form-data">
+    <div class="form-group">
+        <label asp-for="NewTemplate.TemplateName">Template Name</label>
+        <input asp-for="NewTemplate.TemplateName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="NewTemplate.TemplateData">Template File</label>
+        <input type="file" asp-for="NewTemplate.TemplateData" class="form-control" />
+    </div>
+    <button type="submit" asp-page-handler="Add" class="btn btn-primary">Add Template</button>
+</form>
+
+<table class="table mt-4">
+    <thead>
+        <tr>
+            <th>Template Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var template in Model.TemplateFiles)
+        {
+            <tr>
+                <td>@template.TemplateName</td>
+                <td>
+                    <form method="post">
+                        <input type="hidden" name="templateId" value="@template.TemplateID" />
+                        <div class="form-group">
+                            <input type="text" name="templateName" value="@template.TemplateName" class="form-control" />
+                        </div>
+                        <button type="submit" asp-page-handler="Edit" class="btn btn-warning">Edit</button>
+                        <button type="submit" asp-page-handler="Delete" class="btn btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

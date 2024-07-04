@@ -36,6 +36,7 @@ namespace FCDBApp.Controllers
                 Branch = i.Branch,
                 VehicleReg = i.VehicleReg,
                 VehicleType = i.VehicleType,
+                Odometer = i.Odometer,
                 InspectionDate = i.InspectionDate,
                 NextInspectionDue = i.NextInspectionDue,
                 SubmissionTime = i.SubmissionTime,
@@ -73,6 +74,7 @@ namespace FCDBApp.Controllers
                 Branch = inspection.Branch,
                 VehicleReg = inspection.VehicleReg,
                 VehicleType = inspection.VehicleType,
+                Odometer = inspection.Odometer,
                 InspectionDate = inspection.InspectionDate,
                 NextInspectionDue = inspection.NextInspectionDue,
                 SubmissionTime = inspection.SubmissionTime,
@@ -179,6 +181,7 @@ namespace FCDBApp.Controllers
             existingInspection.Branch = inspectionDto.Branch;
             existingInspection.VehicleReg = inspectionDto.VehicleReg;
             existingInspection.VehicleType = inspectionDto.VehicleType;
+            existingInspection.Odometer = inspectionDto.Odometer;
             existingInspection.InspectionDate = inspectionDto.InspectionDate;
             existingInspection.NextInspectionDue = inspectionDto.NextInspectionDue;
             existingInspection.SubmissionTime = DateTime.Now; // Update submission time

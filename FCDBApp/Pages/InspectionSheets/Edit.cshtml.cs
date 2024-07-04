@@ -118,6 +118,7 @@ namespace FCDBApi.Pages.InspectionSheets
                 inspectionTable.InspectionDate = InspectionTable.InspectionDate;
                 inspectionTable.NextInspectionDue = InspectionTable.NextInspectionDue;
                 inspectionTable.PassFailStatus = InspectionTable.PassFailStatus;
+                inspectionTable.Odometer = InspectionTable.Odometer;
 
                 // Map details
                 var details = new List<InspectionDetails>();
