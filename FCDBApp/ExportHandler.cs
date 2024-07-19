@@ -72,8 +72,9 @@ public class ExportHandler
     private void FillTemplate(iText.Layout.Document document, PdfAcroForm form, IDictionary<string, PdfFormField> fields, InspectionTableDto data)
     {
         _logger.LogInformation($"Populating fields for inspection ID: {data.InspectionID}");
-        _logger.LogInformation($"Pass/Fail Status: {data.PassFailStatus}"); // Log the Pass/Fail status
+        _logger.LogInformation($"Pass/Fail Status: {data.PassFailStatus}");
 
+        // Replace these fields
         ReplaceTextBoxWithText(document, form, fields, "branch", data.Branch, 12);
         ReplaceTextBoxWithText(document, form, fields, "reg", data.VehicleReg, 12);
         ReplaceTextBoxWithText(document, form, fields, "type", data.VehicleType, 12);
@@ -85,11 +86,13 @@ public class ExportHandler
         // Draw the pass/fail status rectangle
         DrawPassFailRectangle(document, data.PassFailStatus);
 
-        // Add engineer's printed name and signature
-        AddSignatureToPdf(document, form, fields, "engineerPrint", data.EngineerPrint, 12, data.EngineerSignatureImage, "engineerSign");
+        // Populate these fields
+        SetFormField(fields, "engineerprint", data.EngineerPrint);
+        AddSignatureImage(document, fields, "engineersign", data.EngineerSignatureImage);
 
-        // Add branch manager's printed name and signature
-        AddSignatureToPdf(document, form, fields, "branchPrint", data.BranchManagerPrint, 12, data.BranchManagerSignatureImage, "branchSign");
+        // Populate these fields
+        SetFormField(fields, "branchprint", data.BranchManagerPrint);
+        AddSignatureImage(document, fields, "branchsign", data.BranchManagerSignatureImage);
 
         // Determine which set of fields to fill based on InspectionTypeID
         string prefix;
@@ -131,28 +134,42 @@ public class ExportHandler
         }
     }
 
-    private void AddSignatureToPdf(iText.Layout.Document document, PdfAcroForm form, IDictionary<string, PdfFormField> fields, string printFieldName, string printValue, float fontSize, byte[] signatureImage, string signatureFieldName)
+    private void SetFormField(IDictionary<string, PdfFormField> fields, string fieldName, string value)
     {
-        // Add the printed name
-        ReplaceTextBoxWithText(document, form, fields, printFieldName, printValue, fontSize);
-
-        // Add the signature image
-        if (fields.TryGetValue(signatureFieldName, out var signatureField))
+        if (fields.TryGetValue(fieldName, out var field))
         {
-            var signatureWidget = signatureField.GetWidgets()[0];
-            var signatureRect = signatureWidget.GetRectangle().ToRectangle();
+            _logger.LogInformation($"Setting field '{fieldName}' with value: {value}");
+            field.SetValue(value);
+        }
+        else
+        {
+            _logger.LogWarning($"Field '{fieldName}' not found in the form.");
+        }
+    }
 
-            // Remove the form field
-            form.RemoveField(signatureFieldName);
-
+    private void AddSignatureImage(iText.Layout.Document document, IDictionary<string, PdfFormField> fields, string fieldName, byte[] signatureImage)
+    {
+        if (fields.TryGetValue(fieldName, out var field))
+        {
+            _logger.LogInformation($"Setting signature for field '{fieldName}'");
             if (signatureImage != null && signatureImage.Length > 0)
             {
+                var rect = field.GetWidgets()[0].GetRectangle().ToRectangle();
                 var signatureImageData = ImageDataFactory.Create(signatureImage);
                 var signatureImageObject = new Image(signatureImageData)
-                    .SetFixedPosition(signatureRect.GetX(), signatureRect.GetY(), signatureRect.GetWidth())
-                    .ScaleAbsolute(signatureRect.GetWidth(), signatureRect.GetHeight());
+                    .SetFixedPosition(rect.GetX(), rect.GetY(), rect.GetWidth())
+                    .ScaleAbsolute(rect.GetWidth(), rect.GetHeight());
                 document.Add(signatureImageObject);
+                _logger.LogInformation($"Added signature image to field '{fieldName}'");
             }
+            else
+            {
+                _logger.LogWarning($"Signature image for field '{fieldName}' is null or empty");
+            }
+        }
+        else
+        {
+            _logger.LogWarning($"Field '{fieldName}' not found in the form.");
         }
     }
 
@@ -162,6 +179,8 @@ public class ExportHandler
         {
             var widget = field.GetWidgets()[0];
             var rect = widget.GetRectangle().ToRectangle();
+
+            _logger.LogInformation($"Replacing text box field '{fieldName}' with value: {value}");
 
             // Remove the form field
             form.RemoveField(fieldName);
@@ -175,11 +194,15 @@ public class ExportHandler
                     .SetVerticalAlignment(VerticalAlignment.MIDDLE) // Center vertically
                     .SetFontSize(fontSize); // Use the specified font size
                 document.Add(paragraph);
+
+                _logger.LogInformation($"Replaced text box field '{fieldName}' with value: {value}");
             }
         }
+        else
+        {
+            _logger.LogWarning($"Field '{fieldName}' not found in the form.");
+        }
     }
-
-
 
     private void DrawPassFailRectangle(iText.Layout.Document document, string passFailStatus)
     {
@@ -189,20 +212,18 @@ public class ExportHandler
             return;
         }
 
-        float x, y, width = 28.35f, height = 14.17f; // 1cm = 28.35 points, 0.5cm = 14.17 points
-
-        // LibreOffice origin is top-left, so we need to adjust the y-coordinate
+        float x, y, width = 28.35f, height = 14.17f;
         float pageHeight = document.GetPdfDocument().GetFirstPage().GetPageSize().GetHeight();
 
         if (passFailStatus.Equals("Fail", StringComparison.OrdinalIgnoreCase))
         {
             x = 12.96f * 28.35f;
-            y = pageHeight - (20.60f * 28.35f + height); // Adjust y-coordinate
+            y = pageHeight - (20.60f * 28.35f + height);
         }
         else if (passFailStatus.Equals("Pass", StringComparison.OrdinalIgnoreCase))
         {
             x = 14.00f * 28.35f;
-            y = pageHeight - (20.60f * 28.35f + height); // Adjust y-coordinate
+            y = pageHeight - (20.60f * 28.35f + height);
         }
         else
         {
@@ -216,7 +237,6 @@ public class ExportHandler
               .Rectangle(rectangle)
               .Fill();
     }
-
 
     private string CombineNotes(ICollection<InspectionDetailsDto> details)
     {
@@ -287,6 +307,4 @@ public class ExportHandler
 
         return new JsonResult(new { Message = "Signature captured and associated successfully." }) { StatusCode = 200 };
     }
-
-
 }
