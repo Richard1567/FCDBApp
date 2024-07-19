@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using FCDBApp.Models;
+using Microsoft.AspNetCore.Mvc;
 
 public class ExportHandler
 {
@@ -184,4 +185,71 @@ public class ExportHandler
     {
         return string.Join("; ", details.Where(d => !string.IsNullOrWhiteSpace(d.Comments)).Select(d => d.Comments));
     }
+
+    [HttpPost("capture-signature")]
+    public async Task<IActionResult> CaptureSignature(
+        [FromQuery] Guid[] inspectionIds,
+        [FromQuery] Guid[] jobCardIds,
+        [FromBody] byte[] signatureImage,
+        [FromQuery] string signatoryType)
+    {
+        if (signatureImage == null || string.IsNullOrEmpty(signatoryType))
+        {
+            return new JsonResult(new { Message = "Invalid signature data." }) { StatusCode = 400 };
+        }
+
+        var signature = new Signature
+        {
+            SignatureID = Guid.NewGuid(),
+            SignatureImage = signatureImage,
+            SignatoryType = signatoryType,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Signatures.Add(signature);
+
+        if (inspectionIds != null && inspectionIds.Length > 0)
+        {
+            foreach (var inspectionId in inspectionIds)
+            {
+                var inspection = await _context.InspectionTables.FindAsync(inspectionId);
+                if (inspection != null)
+                {
+                    if (signatoryType == "Engineer")
+                    {
+                        inspection.EngineerSignatureID = signature.SignatureID;
+                    }
+                    else if (signatoryType == "BranchManager")
+                    {
+                        inspection.BranchManagerSignatureID = signature.SignatureID;
+                    }
+                }
+            }
+        }
+
+        if (jobCardIds != null && jobCardIds.Length > 0)
+        {
+            foreach (var jobCardId in jobCardIds)
+            {
+                var jobCard = await _context.JobCards.FindAsync(jobCardId);
+                if (jobCard != null)
+                {
+                    if (signatoryType == "Engineer")
+                    {
+                        jobCard.EngineerSignatureID = signature.SignatureID;
+                    }
+                    else if (signatoryType == "BranchManager")
+                    {
+                        jobCard.BranchManagerSignatureID = signature.SignatureID;
+                    }
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync();
+
+        return new JsonResult(new { Message = "Signature captured and associated successfully." }) { StatusCode = 200 };
+    }
+
+
 }

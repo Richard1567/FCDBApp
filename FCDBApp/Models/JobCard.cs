@@ -19,10 +19,17 @@ namespace FCDBApp.Models
         public DateTime SubmissionTime { get; set; }
         public string? Description { get; set; }
         public List<PartUsed> PartsUsed { get; set; } = new List<PartUsed>();
+
         [Timestamp]
         public byte[] RowVersion { get; set; } = new byte[0];
-    }
 
+        // Link to JobCardSignature
+        public Guid? EngineerSignatureID { get; set; }
+        public Guid? BranchManagerSignatureID { get; set; }
+        public string EngineerPrint { get; set; }
+        public string BranchManagerPrint { get; set; }
+
+    }
 
 
 }

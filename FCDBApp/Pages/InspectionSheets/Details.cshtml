@@ -75,6 +75,31 @@
                     }
                 </ul>
             </dd>
+            @if (Model.Signatures != null)
+            {
+                @foreach (var signature in Model.Signatures)
+                {
+                    <dt class="col-sm-3">
+                        @signature.SignatoryType Print
+                    </dt>
+                    <dd class="col-sm-9">
+                        @Html.DisplayFor(model => signature.Print)
+                    </dd>
+                    <dt class="col-sm-3">
+                        @signature.SignatoryType Signature
+                    </dt>
+                    <dd class="col-sm-9">
+                        @if (signature.SignatureImage != null)
+                        {
+                            <img src="data:image/png;base64,@Convert.ToBase64String(signature.SignatureImage)" alt="@signature.SignatoryType Signature" />
+                        }
+                        else
+                        {
+                            <p>No Signature</p>
+                        }
+                    </dd>
+                }
+            }
         </dl>
     </div>
 </div>

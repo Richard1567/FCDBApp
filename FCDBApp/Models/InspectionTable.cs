@@ -7,7 +7,6 @@ namespace FCDBApp.Models
 {
     public class InspectionTable
     {
-        [Key]
         public Guid InspectionID { get; set; }
         public string Branch { get; set; }
         public string VehicleReg { get; set; }
@@ -15,12 +14,17 @@ namespace FCDBApp.Models
         public int Odometer { get; set; }
         public DateTime InspectionDate { get; set; }
         public DateTime NextInspectionDue { get; set; }
-        public DateTime SubmissionTime { get; set; } = DateTime.Now;
+        public DateTime SubmissionTime { get; set; }
         public int InspectionTypeID { get; set; }
         public int? SiteID { get; set; }
-
-        public ICollection<InspectionDetails> Details { get; set; } = new List<InspectionDetails>();
         public string PassFailStatus { get; set; }
+        public ICollection<InspectionDetails> Details { get; set; } = new List<InspectionDetails>();
+
+        // New fields to store signature IDs
+        public Guid? EngineerSignatureID { get; set; }
+        public Guid? BranchManagerSignatureID { get; set; }
+        public Signature EngineerSignature { get; set; }
+        public Signature BranchManagerSignature { get; set; }
     }
 
     public class InspectionDetails
@@ -86,6 +90,9 @@ namespace FCDBApp.Models
         public int? SiteID { get; set; }
         public ICollection<InspectionDetailsDto> Details { get; set; } = new List<InspectionDetailsDto>();
         public string PassFailStatus { get; set; }
+        public Guid? EngineerSignatureID { get; set; }
+        public Guid? BranchManagerSignatureID { get; set; }
+
     }
 
     public class InspectionDetailsDto

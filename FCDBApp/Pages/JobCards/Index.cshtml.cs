@@ -6,9 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using FCDBApp.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FCDBApi.Pages.JobCards
 {
+    [Authorize]
     public class IndexModel : PageModel
     {
         private readonly FCDBApp.Models.InspectionContext _context;

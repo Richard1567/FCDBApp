@@ -1,0 +1,11 @@
+﻿@page
+@model FCDBApp.Pages.Auth.AccessDeniedModel
+@{
+    ViewData["Title"] = "Access Denied";
+}
+
+<div class="container text-center mt-5">
+    <h1 class="display-4">Access Denied</h1>
+    <p class="lead">You do not have permission to view this page.</p>
+    <a asp-page="/Auth/Login" class="btn btn-primary mt-3">Go to Login Page</a>
+</div>

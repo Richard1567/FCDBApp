@@ -47,6 +47,8 @@ namespace FCDBApi.Controllers
                 PassFailStatus = inspection.PassFailStatus,
                 InspectionTypeID = inspection.InspectionTypeID,
                 SiteID = inspection.SiteID,
+                EngineerSignatureID = inspection.EngineerSignatureID,
+                BranchManagerSignatureID = inspection.BranchManagerSignatureID,
                 Details = inspection.Details.Select(d => new InspectionDetailsDto
                 {
                     InspectionDetailID = d.InspectionDetailID,
@@ -61,6 +63,49 @@ namespace FCDBApi.Controllers
             var fileBytes = System.IO.File.ReadAllBytes(filePath);
 
             return File(fileBytes, "application/pdf", Path.GetFileName(filePath));
+        }
+
+
+        [HttpPost("capture-signature")]
+        public async Task<IActionResult> CaptureSignature(
+            [FromQuery] Guid[] inspectionIds,
+            [FromQuery] Guid[] jobCardIds,
+            [FromBody] SignatureDto signatureDto)
+        {
+            if (signatureDto.SignatureImage == null || string.IsNullOrEmpty(signatureDto.SignatoryType))
+            {
+                return new JsonResult(new { Message = "Invalid signature data." }) { StatusCode = 400 };
+            }
+
+            var signature = new Signature
+            {
+                SignatureID = Guid.NewGuid(),
+                SignatureImage = signatureDto.SignatureImage,
+                SignatoryType = signatureDto.SignatoryType,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Signatures.Add(signature);
+
+            foreach (var inspectionId in inspectionIds)
+            {
+                var inspection = await _context.InspectionTables.FindAsync(inspectionId);
+                if (inspection != null)
+                {
+                    if (signature.SignatoryType == "Engineer")
+                    {
+                        inspection.EngineerSignatureID = signature.SignatureID;
+                    }
+                    else if (signature.SignatoryType == "BranchManager")
+                    {
+                        inspection.BranchManagerSignatureID = signature.SignatureID;
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new { Message = "Signature captured and associated successfully." }) { StatusCode = 200 };
         }
     }
 }

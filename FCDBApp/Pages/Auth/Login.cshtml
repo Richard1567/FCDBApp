@@ -1,0 +1,22 @@
+﻿@page
+@model FCDBApp.Pages.Auth.LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h2>Login</h2>
+
+<form method="post" asp-page-handler="Login">
+    @Html.AntiForgeryToken()
+    <div class="form-group">
+        <label asp-for="Input.Username"></label>
+        <input asp-for="Input.Username" name="Username" />
+        <span asp-validation-for="Input.Username"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Input.Password"></label>
+        <input asp-for="Input.Password" name="Password" type="password" />
+        <span asp-validation-for="Input.Password"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>

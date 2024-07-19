@@ -20,6 +20,9 @@ namespace FCDBApp.Models
         public DbSet<Document> Documents { get; set; }
         public DbSet<DocumentCategory> DocumentCategories { get; set; }
         public DbSet<TemplateFile> TemplateFiles { get; set; }
+        public DbSet<Signature> Signatures { get; set; }
+
+        public DbSet<User> Users { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Define primary keys for each entity
@@ -30,15 +33,19 @@ namespace FCDBApp.Models
             modelBuilder.Entity<JobCard>().HasKey(j => j.JobCardID);
             modelBuilder.Entity<PartUsed>().HasKey(p => p.PartUsedID);
             modelBuilder.Entity<Site>().ToTable("Sites");
+
             modelBuilder.Entity<InspectionTable>()
            .HasMany(i => i.Details)
            .WithOne(d => d.Inspection)
            .HasForeignKey(d => d.InspectionID);
+
             modelBuilder.Entity<InspectionDetails>()
            .HasKey(d => d.InspectionDetailID);
+
             modelBuilder.Entity<InspectionDetails>()
                 .Property(d => d.InspectionDetailID)
                 .ValueGeneratedOnAdd();
+
             // Configure relationships for InspectionDetails entity
             modelBuilder.Entity<InspectionDetails>()
                 .HasOne(d => d.Inspection)
@@ -85,6 +92,29 @@ namespace FCDBApp.Models
                 .WithMany(dc => dc.Documents)
                 .HasForeignKey(d => d.DocumentCategoryID);
 
+            modelBuilder.Entity<JobCard>()
+                .HasOne<Signature>()
+                .WithMany()
+                .HasForeignKey(j => j.EngineerSignatureID)
+                .OnDelete(DeleteBehavior.Restrict);  // Change to Restrict
+
+            modelBuilder.Entity<JobCard>()
+                .HasOne<Signature>()
+                .WithMany()
+                .HasForeignKey(j => j.BranchManagerSignatureID)
+                .OnDelete(DeleteBehavior.Restrict);  // Change to Restrict
+
+            modelBuilder.Entity<InspectionTable>()
+    .HasOne(i => i.EngineerSignature)
+    .WithMany()
+    .HasForeignKey(i => i.EngineerSignatureID)
+    .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InspectionTable>()
+                .HasOne(i => i.BranchManagerSignature)
+                .WithMany()
+                .HasForeignKey(i => i.BranchManagerSignatureID)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Site>().HasData(
         new Site { SiteID = 1, SiteName = "Birmingham Loomis" },

@@ -155,6 +155,40 @@ namespace FCDBApi.Pages.InspectionSheets
                 InspectionTable.Details = details;
                 InspectionTable.PassFailStatus = Request.Form["InspectionTable.PassFailStatus"].FirstOrDefault();
 
+                // Save engineer and branch manager signatures and prints
+                var engineerSignature = Request.Form["EngineerSignature"].FirstOrDefault();
+                var branchManagerSignature = Request.Form["BranchManagerSignature"].FirstOrDefault();
+                var engineerPrint = Request.Form["EngineerPrint"].FirstOrDefault();
+                var branchManagerPrint = Request.Form["BranchManagerPrint"].FirstOrDefault();
+
+                if (!string.IsNullOrEmpty(engineerSignature))
+                {
+                    var engineerSignatureEntity = new Signature
+                    {
+                        SignatureID = Guid.NewGuid(),
+                        SignatureImage = Convert.FromBase64String(engineerSignature.Split(",")[1]), // Remove the data:image/png;base64, part
+                        SignatoryType = "Engineer",
+                        Print = engineerPrint,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.Signatures.Add(engineerSignatureEntity);
+                    InspectionTable.EngineerSignatureID = engineerSignatureEntity.SignatureID;
+                }
+
+                if (!string.IsNullOrEmpty(branchManagerSignature))
+                {
+                    var branchManagerSignatureEntity = new Signature
+                    {
+                        SignatureID = Guid.NewGuid(),
+                        SignatureImage = Convert.FromBase64String(branchManagerSignature.Split(",")[1]), // Remove the data:image/png;base64, part
+                        SignatoryType = "BranchManager",
+                        Print = branchManagerPrint,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.Signatures.Add(branchManagerSignatureEntity);
+                    InspectionTable.BranchManagerSignatureID = branchManagerSignatureEntity.SignatureID;
+                }
+
                 // Set the SubmissionTime property
                 InspectionTable.SubmissionTime = DateTime.Now;
 
@@ -177,6 +211,5 @@ namespace FCDBApi.Pages.InspectionSheets
                 return Page();
             }
         }
-
     }
 }

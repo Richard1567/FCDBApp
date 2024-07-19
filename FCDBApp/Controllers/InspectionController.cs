@@ -269,5 +269,6 @@ namespace FCDBApp.Controllers
         {
             return _context.InspectionTables.Any(e => e.InspectionID == id);
         }
+
     }
 }

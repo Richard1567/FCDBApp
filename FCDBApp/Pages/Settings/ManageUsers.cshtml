@@ -1,0 +1,219 @@
+﻿@page
+@model FCDBApp.Pages.Settings.ManageUsersModel
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<h1>Manage Users</h1>
+
+<style>
+    .form-group {
+        margin-bottom: 1em;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5em;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.5em;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+
+    .btn {
+        background-color: #007bff;
+        color: white;
+        padding: 0.5em 1em;
+        border: none;
+        cursor: pointer;
+        font-size: 1em;
+    }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 2em;
+    }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 0.75em;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #f2f2f2;
+        }
+
+    .actions {
+        display: flex;
+        gap: 0.5em;
+    }
+
+        .actions form {
+            display: inline;
+        }
+
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+        padding-top: 60px;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+</style>
+
+<form method="post" asp-page-handler="Create">
+    <div class="form-group">
+        <label for="Username">Username</label>
+        <input type="text" id="Username" name="User.Username" required />
+    </div>
+    <div class="form-group">
+        <label for="Password">Password</label>
+        <input type="password" id="Password" name="User.PasswordHash" required />
+    </div>
+    <div class="form-group">
+        <label for="FullName">Full Name</label>
+        <input type="text" id="FullName" name="User.FullName" required />
+    </div>
+    <div class="form-group">
+        <label for="Email">Email</label>
+        <input type="email" id="Email" name="User.Email" required />
+    </div>
+    <div class="form-group">
+        <label for="Role">Role</label>
+        <input type="text" id="Role" name="User.Role" required />
+    </div>
+    <button type="submit" class="btn">Create</button>
+</form>
+
+<h2>Existing Users</h2>
+@if (Model.Users != null && Model.Users.Count > 0)
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model.Users)
+            {
+                <tr>
+                    <td>@user.Username</td>
+                    <td>@user.FullName</td>
+                    <td>@user.Email</td>
+                    <td>@user.Role</td>
+                    <td class="actions">
+                        <button type="button" class="btn" onclick="openEditModal('@user.UserID', '@user.Username', '@user.FullName', '@user.Email', '@user.Role')">Edit</button>
+                        <form method="post" asp-page-handler="Delete">
+                            <input type="hidden" name="id" value="@user.UserID" />
+                            <button type="submit" class="btn">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No users found.</p>
+}
+
+<!-- The Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <h2>Edit User</h2>
+        <form id="editForm" method="post" asp-page-handler="Edit">
+            <input type="hidden" id="editUserID" name="User.UserID" />
+            <div class="form-group">
+                <label for="editUsername">Username</label>
+                <input type="text" id="editUsername" name="User.Username" required />
+            </div>
+            <div class="form-group">
+                <label for="editPassword">Password</label>
+                <input type="password" id="editPassword" name="User.PasswordHash" />
+            </div>
+            <div class="form-group">
+                <label for="editFullName">Full Name</label>
+                <input type="text" id="editFullName" name="User.FullName" required />
+            </div>
+            <div class="form-group">
+                <label for="editEmail">Email</label>
+                <input type="email" id="editEmail" name="User.Email" required />
+            </div>
+            <div class="form-group">
+                <label for="editRole">Role</label>
+                <input type="text" id="editRole" name="User.Role" required />
+            </div>
+            <button type="submit" class="btn">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openEditModal(id, username, fullName, email, role) {
+            document.getElementById('editUserID').value = id;
+            document.getElementById('editUsername').value = username;
+            document.getElementById('editFullName').value = fullName;
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editRole').value = role;
+            document.getElementById('editModal').style.display = "block";
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = "none";
+        }
+
+        // Close the modal when the user clicks anywhere outside of it
+        window.onclick = function (event) {
+            if (event.target == document.getElementById('editModal')) {
+                document.getElementById('editModal').style.display = "none";
+            }
+        }
+    </script>
+}

@@ -23,6 +23,7 @@ namespace FCDBApi.Pages.InspectionSheets
 
         public InspectionTable InspectionTable { get; set; }
         public List<InspectionCategories> CategoriesWithItems { get; set; }
+        public List<Signature> Signatures { get; set; }
 
         public async Task<IActionResult> OnGetAsync(Guid id, int inspectionTypeId)
         {
@@ -39,6 +40,17 @@ namespace FCDBApi.Pages.InspectionSheets
             CategoriesWithItems = await _inspectionSheetService.GetInspectionCategoriesWithItemsForTypeAsync(inspectionTypeId);
 
             _logger.LogInformation($"Categories with items: {string.Join(", ", CategoriesWithItems.Select(c => c.CategoryName))}");
+
+            // Fetch the signatures
+            Signatures = await _inspectionSheetService.GetSignaturesByIdsAsync(
+                InspectionTable.EngineerSignatureID,
+                InspectionTable.BranchManagerSignatureID
+            );
+
+            if (Signatures == null || !Signatures.Any())
+            {
+                _logger.LogWarning("Signatures not found.");
+            }
 
             return Page();
         }

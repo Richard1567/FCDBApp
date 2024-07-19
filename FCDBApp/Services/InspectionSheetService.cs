@@ -32,11 +32,13 @@ namespace FCDBApp.Services
                 Branch = i.Branch,
                 VehicleReg = i.VehicleReg,
                 VehicleType = i.VehicleType,
+                Odometer = i.Odometer,
                 InspectionDate = i.InspectionDate,
                 NextInspectionDue = i.NextInspectionDue,
                 SubmissionTime = i.SubmissionTime,
                 InspectionTypeID = i.InspectionTypeID,
-                PassFailStatus = i.PassFailStatus,  
+                SiteID = i.SiteID,
+                PassFailStatus = i.PassFailStatus,
                 Details = i.Details
                             .Where(d => d.Item.InspectionTypeIndicator.Contains(i.InspectionTypeID.ToString()))
                             .Select(d => new InspectionDetailsDto
@@ -46,10 +48,11 @@ namespace FCDBApp.Services
                                 InspectionItemID = d.InspectionItemID,
                                 Result = d.Result,
                                 Comments = d.Comments
-                            }).ToList()
+                            }).ToList(),
+                EngineerSignatureID = i.EngineerSignatureID,
+                BranchManagerSignatureID = i.BranchManagerSignatureID
             }).ToList();
         }
-
 
         public async Task<InspectionTable> GetInspectionSheetByIdAsync(Guid id)
         {
@@ -62,34 +65,48 @@ namespace FCDBApp.Services
             {
                 return null;
             }
+            return inspection;
+        }
 
-            return new InspectionTable
+        public async Task<InspectionTableDto> GetInspectionSheetDtoByIdAsync(Guid id)
+        {
+            var inspection = await _context.InspectionTables
+                                           .Include(i => i.Details)
+                                           .ThenInclude(d => d.Item)
+                                           .FirstOrDefaultAsync(i => i.InspectionID == id);
+
+            if (inspection == null)
+            {
+                return null;
+            }
+
+            // Fetch the signatures separately
+            var engineerSignature = await GetSignatureByIdAsync(inspection.EngineerSignatureID);
+            var branchManagerSignature = await GetSignatureByIdAsync(inspection.BranchManagerSignatureID);
+
+            return new InspectionTableDto
             {
                 InspectionID = inspection.InspectionID,
                 Branch = inspection.Branch,
                 VehicleReg = inspection.VehicleReg,
                 VehicleType = inspection.VehicleType,
+                Odometer = inspection.Odometer,
                 InspectionDate = inspection.InspectionDate,
                 NextInspectionDue = inspection.NextInspectionDue,
                 SubmissionTime = inspection.SubmissionTime,
                 InspectionTypeID = inspection.InspectionTypeID,
-                PassFailStatus = inspection.PassFailStatus, 
-                Details = inspection.Details.Select(d => new InspectionDetails
+                SiteID = inspection.SiteID,
+                PassFailStatus = inspection.PassFailStatus,
+                Details = inspection.Details.Select(d => new InspectionDetailsDto
                 {
                     InspectionDetailID = d.InspectionDetailID,
                     InspectionID = d.InspectionID,
                     InspectionItemID = d.InspectionItemID,
                     Result = d.Result,
-                    Comments = d.Comments,
-                    Item = new InspectionItems
-                    {
-                        InspectionItemID = d.Item.InspectionItemID,
-                        CategoryID = d.Item.CategoryID,
-                        ItemDescription = d.Item.ItemDescription,
-                        InspectionTypeIndicator = d.Item.InspectionTypeIndicator,
-                        InspectionTypeID = d.Item.InspectionTypeID
-                    }
-                }).ToList()
+                    Comments = d.Comments
+                }).ToList(),
+                EngineerSignatureID = inspection.EngineerSignatureID,
+                BranchManagerSignatureID = inspection.BranchManagerSignatureID
             };
         }
 
@@ -109,27 +126,51 @@ namespace FCDBApp.Services
             _logger.LogInformation("Creating inspection sheet with type ID: {InspectionTypeID}", inspectionTable.InspectionTypeID);
             _logger.LogInformation("SubmissionTime: {SubmissionTime}", inspectionTable.SubmissionTime);
 
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                _context.InspectionTables.Add(inspectionTable);
-
-                foreach (var detail in inspectionTable.Details)
+                try
                 {
-                    _logger.LogInformation("Adding detail to context: {Detail}", detail);
-                    _context.InspectionDetails.Add(detail);
-                }
+                    // Insert Engineer Signature if provided and not already existing
+                    if (inspectionTable.EngineerSignature != null)
+                    {
+                        _context.Signatures.Add(inspectionTable.EngineerSignature);
+                        await _context.SaveChangesAsync();
+                        inspectionTable.EngineerSignatureID = inspectionTable.EngineerSignature.SignatureID;
+                    }
 
-                await _context.SaveChangesAsync();
-                _logger.LogInformation("Inspection sheet created successfully with ID: {InspectionID}", inspectionTable.InspectionID);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating inspection sheet");
-                throw;
+                    // Insert Branch Manager Signature if provided and not already existing
+                    if (inspectionTable.BranchManagerSignature != null)
+                    {
+                        _context.Signatures.Add(inspectionTable.BranchManagerSignature);
+                        await _context.SaveChangesAsync();
+                        inspectionTable.BranchManagerSignatureID = inspectionTable.BranchManagerSignature.SignatureID;
+                    }
+
+                    // Insert the inspection table
+                    _context.InspectionTables.Add(inspectionTable);
+                    await _context.SaveChangesAsync();
+
+                    // Insert the inspection details
+                    foreach (var detail in inspectionTable.Details)
+                    {
+                        detail.InspectionID = inspectionTable.InspectionID;
+                        _logger.LogInformation("Adding detail to context: {Detail}", detail);
+                        _context.InspectionDetails.Add(detail);
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+                    _logger.LogInformation("Inspection sheet created successfully with ID: {InspectionID}", inspectionTable.InspectionID);
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error creating inspection sheet");
+                    throw;
+                }
             }
         }
-
-
 
         public async Task UpdateInspectionSheetAsync(InspectionTable inspectionTable)
         {
@@ -152,6 +193,7 @@ namespace FCDBApp.Services
                 existingInspection.SubmissionTime = DateTime.Now;
                 existingInspection.InspectionTypeID = inspectionTable.InspectionTypeID;
                 existingInspection.PassFailStatus = inspectionTable.PassFailStatus;
+
                 var incomingDetails = inspectionTable.Details ?? new List<InspectionDetails>();
                 var existingDetails = existingInspection.Details.ToList();
 
@@ -180,7 +222,19 @@ namespace FCDBApp.Services
                     }
                 }
 
+                // Update signatures if provided
+                if (inspectionTable.EngineerSignatureID.HasValue)
+                {
+                    existingInspection.EngineerSignatureID = inspectionTable.EngineerSignatureID;
+                }
+
+                if (inspectionTable.BranchManagerSignatureID.HasValue)
+                {
+                    existingInspection.BranchManagerSignatureID = inspectionTable.BranchManagerSignatureID;
+                }
+
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Inspection sheet updated successfully.");
             }
             catch (DbUpdateConcurrencyException ex)
             {
@@ -191,7 +245,6 @@ namespace FCDBApp.Services
                 throw new Exception("An error occurred while updating the inspection sheet.", ex);
             }
         }
-
 
         public async Task DeleteInspectionSheetAsync(Guid id)
         {
@@ -233,6 +286,7 @@ namespace FCDBApp.Services
 
             return categories;
         }
+
         public async Task<List<InspectionCategoryDto>> GetInspectionCategoriesDtoWithItemsForTypeAsync(int inspectionTypeId)
         {
             _logger.LogInformation($"Fetching categories for inspection type ID containing: {inspectionTypeId}");
@@ -278,114 +332,6 @@ namespace FCDBApp.Services
             return categories;
         }
 
-        public async Task<InspectionTableDto> GetInspectionSheetDtoByIdAsync(Guid id)
-        {
-            var inspection = await _context.InspectionTables
-                                           .Include(i => i.Details)
-                                           .ThenInclude(d => d.Item)
-                                           .FirstOrDefaultAsync(i => i.InspectionID == id);
-
-            if (inspection == null)
-            {
-                return null;
-            }
-
-            return new InspectionTableDto
-            {
-                InspectionID = inspection.InspectionID,
-                Branch = inspection.Branch,
-                VehicleReg = inspection.VehicleReg,
-                VehicleType = inspection.VehicleType,
-                InspectionDate = inspection.InspectionDate,
-                NextInspectionDue = inspection.NextInspectionDue,
-                SubmissionTime = inspection.SubmissionTime,
-                InspectionTypeID = inspection.InspectionTypeID,
-                PassFailStatus = inspection.PassFailStatus,
-                Details = inspection.Details.Select(d => new InspectionDetailsDto
-                {
-                    InspectionDetailID = d.InspectionDetailID,
-                    InspectionID = d.InspectionID,
-                    InspectionItemID = d.InspectionItemID,
-                    Result = d.Result,
-                    Comments = d.Comments
-                }).ToList()
-            };
-        }
-
-
-        public async Task UpdateInspectionSheetDtoAsync(InspectionTableDto inspectionDto)
-        {
-            try
-            {
-                var existingInspection = await _context.InspectionTables
-                    .Include(i => i.Details)
-                    .FirstOrDefaultAsync(i => i.InspectionID == inspectionDto.InspectionID);
-
-                if (existingInspection == null)
-                {
-                    throw new Exception("Unable to save changes. The inspection sheet was deleted by another user.");
-                }
-
-                existingInspection.Branch = inspectionDto.Branch;
-                existingInspection.VehicleReg = inspectionDto.VehicleReg;
-                existingInspection.VehicleType = inspectionDto.VehicleType;
-                existingInspection.InspectionDate = inspectionDto.InspectionDate;
-                existingInspection.NextInspectionDue = inspectionDto.NextInspectionDue;
-                existingInspection.SubmissionTime = DateTime.Now;
-                existingInspection.InspectionTypeID = inspectionDto.InspectionTypeID;
-                existingInspection.PassFailStatus = inspectionDto.PassFailStatus;   
-                var incomingDetails = inspectionDto.Details ?? new List<InspectionDetailsDto>();
-                var existingDetails = existingInspection.Details.ToList();
-
-                _logger.LogInformation($"Existing details count: {existingDetails.Count}");
-                _logger.LogInformation($"Incoming details count: {incomingDetails.Count}");
-
-                var detailsToRemove = existingDetails.Where(e => !incomingDetails.Any(i => i.InspectionDetailID == e.InspectionDetailID)).ToList();
-                _logger.LogInformation($"Details to remove count: {detailsToRemove.Count}");
-                _context.InspectionDetails.RemoveRange(detailsToRemove);
-
-                foreach (var incomingDetail in incomingDetails)
-                {
-                    var existingDetail = existingDetails.FirstOrDefault(e => e.InspectionDetailID == incomingDetail.InspectionDetailID);
-                    if (existingDetail != null)
-                    {
-                        existingDetail.Result = incomingDetail.Result;
-                        existingDetail.Comments = incomingDetail.Comments;
-                        _context.Entry(existingDetail).State = EntityState.Modified;
-                        _logger.LogInformation($"Updated detail: DetailID={existingDetail.InspectionDetailID}, Result={existingDetail.Result}, Comments={existingDetail.Comments}");
-                    }
-                    else
-                    {
-                        var newDetail = new InspectionDetails
-                        {
-                            InspectionID = inspectionDto.InspectionID,
-                            InspectionItemID = incomingDetail.InspectionItemID,
-                            Result = incomingDetail.Result,
-                            Comments = incomingDetail.Comments
-                        };
-                        _context.InspectionDetails.Add(newDetail);
-                        _logger.LogInformation($"Added new detail: ItemID={newDetail.InspectionItemID}, Result={newDetail.Result}, Comments={newDetail.Comments}");
-                    }
-                }
-
-                await _context.SaveChangesAsync();
-                _logger.LogInformation("Inspection sheet updated successfully.");
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                throw new Exception("Unable to save changes. The entity was deleted by another user.", ex);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while updating the inspection sheet.", ex);
-            }
-        }
-
-
-
-
-
-
         public async Task<InspectionTableDto> GetFilteredInspectionSheetByIdAsync(Guid id, int inspectionTypeId)
         {
             var inspection = await _context.InspectionTables
@@ -405,17 +351,19 @@ namespace FCDBApp.Services
 
             var filteredDetails = inspection.Details.Where(d => validItemIds.Contains(d.InspectionItemID)).ToList();
 
-            var inspectionDto = new InspectionTableDto
+            return new InspectionTableDto
             {
                 InspectionID = inspection.InspectionID,
                 Branch = inspection.Branch,
                 VehicleReg = inspection.VehicleReg,
                 VehicleType = inspection.VehicleType,
+                Odometer = inspection.Odometer,
                 InspectionDate = inspection.InspectionDate,
                 NextInspectionDue = inspection.NextInspectionDue,
                 SubmissionTime = inspection.SubmissionTime,
                 InspectionTypeID = inspection.InspectionTypeID,
-                PassFailStatus = inspection.PassFailStatus, 
+                SiteID = inspection.SiteID,
+                PassFailStatus = inspection.PassFailStatus,
                 Details = filteredDetails.Select(d => new InspectionDetailsDto
                 {
                     InspectionDetailID = d.InspectionDetailID,
@@ -423,14 +371,27 @@ namespace FCDBApp.Services
                     InspectionItemID = d.InspectionItemID,
                     Result = d.Result,
                     Comments = d.Comments
-                }).ToList()
+                }).ToList(),
+                EngineerSignatureID = inspection.EngineerSignatureID,
+                BranchManagerSignatureID = inspection.BranchManagerSignatureID
             };
-
-            return inspectionDto;
         }
 
+        public async Task<Signature> GetSignatureByIdAsync(Guid? signatureId)
+        {
+            if (signatureId == null)
+            {
+                return null;
+            }
 
+            return await _context.Signatures.FindAsync(signatureId);
+        }
 
-
+        public async Task<List<Signature>> GetSignaturesByIdsAsync(params Guid?[] signatureIds)
+        {
+            return await _context.Signatures
+                .Where(s => signatureIds.Contains(s.SignatureID))
+                .ToListAsync();
+        }
     }
 }
