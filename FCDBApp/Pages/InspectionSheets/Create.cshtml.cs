@@ -155,11 +155,8 @@ namespace FCDBApi.Pages.InspectionSheets
                 InspectionTable.Details = details;
                 InspectionTable.PassFailStatus = Request.Form["InspectionTable.PassFailStatus"].FirstOrDefault();
 
-                // Save engineer and branch manager signatures and prints
                 var engineerSignature = Request.Form["EngineerSignature"].FirstOrDefault();
                 var branchManagerSignature = Request.Form["BranchManagerSignature"].FirstOrDefault();
-                var engineerPrint = Request.Form["EngineerPrint"].FirstOrDefault();
-                var branchManagerPrint = Request.Form["BranchManagerPrint"].FirstOrDefault();
 
                 if (!string.IsNullOrEmpty(engineerSignature))
                 {
@@ -168,7 +165,7 @@ namespace FCDBApi.Pages.InspectionSheets
                         SignatureID = Guid.NewGuid(),
                         SignatureImage = Convert.FromBase64String(engineerSignature.Split(",")[1]), // Remove the data:image/png;base64, part
                         SignatoryType = "Engineer",
-                        Print = engineerPrint,
+                        Print = Request.Form["EngineerPrint"].FirstOrDefault(),
                         CreatedAt = DateTime.UtcNow
                     };
                     _context.Signatures.Add(engineerSignatureEntity);
@@ -182,12 +179,13 @@ namespace FCDBApi.Pages.InspectionSheets
                         SignatureID = Guid.NewGuid(),
                         SignatureImage = Convert.FromBase64String(branchManagerSignature.Split(",")[1]), // Remove the data:image/png;base64, part
                         SignatoryType = "BranchManager",
-                        Print = branchManagerPrint,
+                        Print = Request.Form["BranchManagerPrint"].FirstOrDefault(),
                         CreatedAt = DateTime.UtcNow
                     };
                     _context.Signatures.Add(branchManagerSignatureEntity);
                     InspectionTable.BranchManagerSignatureID = branchManagerSignatureEntity.SignatureID;
                 }
+
 
                 // Set the SubmissionTime property
                 InspectionTable.SubmissionTime = DateTime.Now;

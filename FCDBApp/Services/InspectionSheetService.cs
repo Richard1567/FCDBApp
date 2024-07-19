@@ -61,10 +61,6 @@ namespace FCDBApp.Services
                                            .ThenInclude(d => d.Item)
                                            .FirstOrDefaultAsync(i => i.InspectionID == id);
 
-            if (inspection == null)
-            {
-                return null;
-            }
             return inspection;
         }
 
@@ -105,8 +101,7 @@ namespace FCDBApp.Services
                     Result = d.Result,
                     Comments = d.Comments
                 }).ToList(),
-                EngineerSignatureID = inspection.EngineerSignatureID,
-                BranchManagerSignatureID = inspection.BranchManagerSignatureID
+
             };
         }
 
@@ -130,21 +125,7 @@ namespace FCDBApp.Services
             {
                 try
                 {
-                    // Insert Engineer Signature if provided and not already existing
-                    if (inspectionTable.EngineerSignature != null)
-                    {
-                        _context.Signatures.Add(inspectionTable.EngineerSignature);
-                        await _context.SaveChangesAsync();
-                        inspectionTable.EngineerSignatureID = inspectionTable.EngineerSignature.SignatureID;
-                    }
 
-                    // Insert Branch Manager Signature if provided and not already existing
-                    if (inspectionTable.BranchManagerSignature != null)
-                    {
-                        _context.Signatures.Add(inspectionTable.BranchManagerSignature);
-                        await _context.SaveChangesAsync();
-                        inspectionTable.BranchManagerSignatureID = inspectionTable.BranchManagerSignature.SignatureID;
-                    }
 
                     // Insert the inspection table
                     _context.InspectionTables.Add(inspectionTable);
@@ -256,6 +237,26 @@ namespace FCDBApp.Services
             {
                 _context.InspectionDetails.RemoveRange(inspectionSheet.Details);
                 _context.InspectionTables.Remove(inspectionSheet);
+
+                // Optionally, remove associated signatures if they are not used elsewhere
+                if (inspectionSheet.EngineerSignatureID.HasValue)
+                {
+                    var engineerSignature = await _context.Signatures.FindAsync(inspectionSheet.EngineerSignatureID);
+                    if (engineerSignature != null)
+                    {
+                        _context.Signatures.Remove(engineerSignature);
+                    }
+                }
+
+                if (inspectionSheet.BranchManagerSignatureID.HasValue)
+                {
+                    var branchManagerSignature = await _context.Signatures.FindAsync(inspectionSheet.BranchManagerSignatureID);
+                    if (branchManagerSignature != null)
+                    {
+                        _context.Signatures.Remove(branchManagerSignature);
+                    }
+                }
+
                 await _context.SaveChangesAsync();
             }
         }

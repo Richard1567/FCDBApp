@@ -104,18 +104,6 @@ namespace FCDBApp.Models
                 .HasForeignKey(j => j.BranchManagerSignatureID)
                 .OnDelete(DeleteBehavior.Restrict);  // Change to Restrict
 
-            modelBuilder.Entity<InspectionTable>()
-    .HasOne(i => i.EngineerSignature)
-    .WithMany()
-    .HasForeignKey(i => i.EngineerSignatureID)
-    .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<InspectionTable>()
-                .HasOne(i => i.BranchManagerSignature)
-                .WithMany()
-                .HasForeignKey(i => i.BranchManagerSignatureID)
-                .OnDelete(DeleteBehavior.Restrict);
-
             modelBuilder.Entity<Site>().HasData(
         new Site { SiteID = 1, SiteName = "Birmingham Loomis" },
         new Site { SiteID = 2, SiteName = "Colchester Loomis" },

@@ -14,6 +14,8 @@
         <form method="post" onsubmit="handleFormSubmit(event)">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
+            <!-- Other form fields -->
+
             <div class="form-group">
                 <label asp-for="InspectionTable.Branch" class="control-label"></label>
                 @if (Model.Sites != null && Model.Sites.Any())
@@ -119,7 +121,7 @@
                 <input type="text" id="EngineerPrint" name="EngineerPrint" class="form-control" required />
             </div>
             <div class="form-group">
-                <label>Engineer Signature</label>
+                <label for="EngineerSignature">Engineer Signature</label>
                 <canvas id="engineerSignaturePad" class="signature-pad"></canvas>
                 <button type="button" onclick="clearSignaturePad('engineerSignaturePad')">Clear</button>
                 <input type="hidden" id="EngineerSignature" name="EngineerSignature" />
@@ -129,7 +131,7 @@
                 <input type="text" id="BranchManagerPrint" name="BranchManagerPrint" class="form-control" />
             </div>
             <div class="form-group">
-                <label>Branch Manager Signature (Optional)</label>
+                <label for="BranchManagerSignature">Branch Manager Signature (Optional)</label>
                 <canvas id="branchManagerSignaturePad" class="signature-pad"></canvas>
                 <button type="button" onclick="clearSignaturePad('branchManagerSignaturePad')">Clear</button>
                 <input type="hidden" id="BranchManagerSignature" name="BranchManagerSignature" />
@@ -161,22 +163,29 @@
         }
 
         function handleFormSubmit(event) {
-            // Save signatures
-            document.getElementById('EngineerSignature').value = engineerSignaturePad.toDataURL();
-            document.getElementById('BranchManagerSignature').value = branchManagerSignaturePad.toDataURL();
+            // Prevent the default form submission
+            event.preventDefault();
 
-            // Get all checkboxes and their corresponding hidden fields
-            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
-                if (!checkbox.checked) {
-                    // If the checkbox is not checked, ensure a hidden field with "n" is added
-                    const hiddenField = document.createElement('input');
-                    hiddenField.type = 'hidden';
-                    hiddenField.name = checkbox.name;
-                    hiddenField.value = 'n';
-                    checkbox.form.appendChild(hiddenField);
-                }
+            // Save signatures
+            var engineerSignature = engineerSignaturePad.toDataURL();
+            var branchManagerSignature = branchManagerSignaturePad.toDataURL();
+
+            console.log('Engineer Signature:', engineerSignature);
+            console.log('Branch Manager Signature:', branchManagerSignature);
+
+            document.getElementById('EngineerSignature').value = engineerSignature;
+            document.getElementById('BranchManagerSignature').value = branchManagerSignature;
+
+            // Log all form data to the console
+            var formData = new FormData(event.target);
+            formData.forEach((value, key) => {
+                console.log(key + ': ' + value);
             });
+
+            // Confirm data in console, then submit form
+            setTimeout(() => {
+                event.target.submit();
+            }, 1000); // Adjust timeout as needed
         }
 
         function handleBranchChange(event) {

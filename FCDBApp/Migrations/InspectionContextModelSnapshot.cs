@@ -800,10 +800,6 @@ namespace FCDBApi.Migrations
 
                     b.HasKey("InspectionID");
 
-                    b.HasIndex("BranchManagerSignatureID");
-
-                    b.HasIndex("EngineerSignatureID");
-
                     b.ToTable("InspectionTables");
                 });
 
@@ -1192,23 +1188,6 @@ namespace FCDBApi.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("InspectionType");
-                });
-
-            modelBuilder.Entity("FCDBApp.Models.InspectionTable", b =>
-                {
-                    b.HasOne("FCDBApp.Models.Signature", "BranchManagerSignature")
-                        .WithMany()
-                        .HasForeignKey("BranchManagerSignatureID")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("FCDBApp.Models.Signature", "EngineerSignature")
-                        .WithMany()
-                        .HasForeignKey("EngineerSignatureID")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("BranchManagerSignature");
-
-                    b.Navigation("EngineerSignature");
                 });
 
             modelBuilder.Entity("FCDBApp.Models.JobCard", b =>

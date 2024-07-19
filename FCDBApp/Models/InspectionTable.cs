@@ -20,11 +20,11 @@ namespace FCDBApp.Models
         public string PassFailStatus { get; set; }
         public ICollection<InspectionDetails> Details { get; set; } = new List<InspectionDetails>();
 
-        // New fields to store signature IDs
+        // Foreign keys to Signatures
         public Guid? EngineerSignatureID { get; set; }
+
         public Guid? BranchManagerSignatureID { get; set; }
-        public Signature EngineerSignature { get; set; }
-        public Signature BranchManagerSignature { get; set; }
+
     }
 
     public class InspectionDetails
