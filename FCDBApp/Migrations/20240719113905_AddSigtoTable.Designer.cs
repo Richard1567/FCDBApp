@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FCDBApi.Migrations
 {
     [DbContext(typeof(InspectionContext))]
-    [Migration("20240719112513_AddSigtoTable")]
+    [Migration("20240719113905_AddSigtoTable")]
     partial class AddSigtoTable
     {
         /// <inheritdoc />

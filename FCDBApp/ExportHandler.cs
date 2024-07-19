@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using FCDBApp.Models;
 using Microsoft.AspNetCore.Mvc;
+using iText.IO.Image;
 
 public class ExportHandler
 {
@@ -84,6 +85,12 @@ public class ExportHandler
         // Draw the pass/fail status rectangle
         DrawPassFailRectangle(document, data.PassFailStatus);
 
+        // Add engineer's printed name and signature
+        AddSignatureToPdf(document, form, fields, "engineerPrint", data.EngineerPrint, 12, data.EngineerSignatureImage, "engineerSign");
+
+        // Add branch manager's printed name and signature
+        AddSignatureToPdf(document, form, fields, "branchPrint", data.BranchManagerPrint, 12, data.BranchManagerSignatureImage, "branchSign");
+
         // Determine which set of fields to fill based on InspectionTypeID
         string prefix;
         switch (data.InspectionTypeID)
@@ -124,6 +131,31 @@ public class ExportHandler
         }
     }
 
+    private void AddSignatureToPdf(iText.Layout.Document document, PdfAcroForm form, IDictionary<string, PdfFormField> fields, string printFieldName, string printValue, float fontSize, byte[] signatureImage, string signatureFieldName)
+    {
+        // Add the printed name
+        ReplaceTextBoxWithText(document, form, fields, printFieldName, printValue, fontSize);
+
+        // Add the signature image
+        if (fields.TryGetValue(signatureFieldName, out var signatureField))
+        {
+            var signatureWidget = signatureField.GetWidgets()[0];
+            var signatureRect = signatureWidget.GetRectangle().ToRectangle();
+
+            // Remove the form field
+            form.RemoveField(signatureFieldName);
+
+            if (signatureImage != null && signatureImage.Length > 0)
+            {
+                var signatureImageData = ImageDataFactory.Create(signatureImage);
+                var signatureImageObject = new Image(signatureImageData)
+                    .SetFixedPosition(signatureRect.GetX(), signatureRect.GetY(), signatureRect.GetWidth())
+                    .ScaleAbsolute(signatureRect.GetWidth(), signatureRect.GetHeight());
+                document.Add(signatureImageObject);
+            }
+        }
+    }
+
     private void ReplaceTextBoxWithText(iText.Layout.Document document, PdfAcroForm form, IDictionary<string, PdfFormField> fields, string fieldName, string value, float fontSize)
     {
         if (fields.TryGetValue(fieldName, out var field))
@@ -134,15 +166,20 @@ public class ExportHandler
             // Remove the form field
             form.RemoveField(fieldName);
 
-            // Add the text at the position of the form field
-            var paragraph = new Paragraph(value)
-                .SetFixedPosition(rect.GetX(), rect.GetY(), rect.GetWidth())
-                .SetTextAlignment(TextAlignment.CENTER)
-                .SetVerticalAlignment(VerticalAlignment.MIDDLE) // Center vertically
-                .SetFontSize(fontSize); // Use the specified font size
-            document.Add(paragraph);
+            if (!string.IsNullOrEmpty(value))
+            {
+                // Add the text at the position of the form field
+                var paragraph = new Paragraph(value)
+                    .SetFixedPosition(rect.GetX(), rect.GetY(), rect.GetWidth())
+                    .SetTextAlignment(TextAlignment.CENTER)
+                    .SetVerticalAlignment(VerticalAlignment.MIDDLE) // Center vertically
+                    .SetFontSize(fontSize); // Use the specified font size
+                document.Add(paragraph);
+            }
         }
     }
+
+
 
     private void DrawPassFailRectangle(iText.Layout.Document document, string passFailStatus)
     {

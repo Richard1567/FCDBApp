@@ -28,6 +28,8 @@ namespace FCDBApi.Controllers
         {
             var inspection = await _context.InspectionTables
                 .Include(i => i.Details)
+                .Include(i => i.EngineerSignature)
+                .Include(i => i.BranchManagerSignature)
                 .FirstOrDefaultAsync(i => i.InspectionID == inspectionId);
 
             if (inspection == null)
@@ -48,7 +50,11 @@ namespace FCDBApi.Controllers
                 InspectionTypeID = inspection.InspectionTypeID,
                 SiteID = inspection.SiteID,
                 EngineerSignatureID = inspection.EngineerSignatureID,
+                EngineerPrint = inspection.EngineerSignature?.Print,
+                EngineerSignatureImage = inspection.EngineerSignature?.SignatureImage,
                 BranchManagerSignatureID = inspection.BranchManagerSignatureID,
+                BranchManagerPrint = inspection.BranchManagerSignature?.Print,
+                BranchManagerSignatureImage = inspection.BranchManagerSignature?.SignatureImage,
                 Details = inspection.Details.Select(d => new InspectionDetailsDto
                 {
                     InspectionDetailID = d.InspectionDetailID,
@@ -64,6 +70,7 @@ namespace FCDBApi.Controllers
 
             return File(fileBytes, "application/pdf", Path.GetFileName(filePath));
         }
+
 
 
         [HttpPost("capture-signature")]

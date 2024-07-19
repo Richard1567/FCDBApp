@@ -44,22 +44,22 @@ namespace FCDBApp.Models
 
         // These fields will not be mapped to the database
         [NotMapped]
-        public Signature EngineerSignature { get; set; }
+        public Signature? EngineerSignature { get; set; }
 
         [NotMapped]
-        public Signature BranchManagerSignature { get; set; }
+        public Signature? BranchManagerSignature { get; set; }
 
         [NotMapped]
-        public string EngineerSignatureBase64 { get; set; }
+        public string? EngineerSignatureBase64 { get; set; }
 
         [NotMapped]
-        public string BranchManagerSignatureBase64 { get; set; }
+        public string? BranchManagerSignatureBase64 { get; set; }
 
         [NotMapped]
-        public string EngineerPrint { get; set; }
+        public string? EngineerPrint { get; set; }
 
         [NotMapped]
-        public string BranchManagerPrint { get; set; }
+        public string? BranchManagerPrint { get; set; }
     }
 
     public class InspectionDetails
@@ -126,7 +126,11 @@ namespace FCDBApp.Models
         public ICollection<InspectionDetailsDto> Details { get; set; } = new List<InspectionDetailsDto>();
         public string PassFailStatus { get; set; }
         public Guid? EngineerSignatureID { get; set; }
+        public string EngineerPrint { get; set; }
+        public byte[] EngineerSignatureImage { get; set; }
         public Guid? BranchManagerSignatureID { get; set; }
+        public string BranchManagerPrint { get; set; }
+        public byte[] BranchManagerSignatureImage { get; set; }
 
     }
 
