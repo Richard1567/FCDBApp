@@ -118,31 +118,45 @@ namespace FCDBApp.Services
                 _logger.LogWarning("SubmissionTime was not set. Setting to current time: {SubmissionTime}", inspectionTable.SubmissionTime);
             }
 
-            _logger.LogInformation("Creating inspection sheet with type ID: {InspectionTypeID}", inspectionTable.InspectionTypeID);
-            _logger.LogInformation("SubmissionTime: {SubmissionTime}", inspectionTable.SubmissionTime);
-
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 try
                 {
-
-
-                    // Insert the inspection table
-                    _context.InspectionTables.Add(inspectionTable);
-                    await _context.SaveChangesAsync();
-
-                    // Insert the inspection details
-                    foreach (var detail in inspectionTable.Details)
+                    // Insert Engineer Signature
+                    if (!string.IsNullOrEmpty(inspectionTable.EngineerSignatureBase64))
                     {
-                        detail.InspectionID = inspectionTable.InspectionID;
-                        _logger.LogInformation("Adding detail to context: {Detail}", detail);
-                        _context.InspectionDetails.Add(detail);
+                        var engineerSignatureEntity = new Signature
+                        {
+                            SignatureID = Guid.NewGuid(),
+                            SignatureImage = Convert.FromBase64String(inspectionTable.EngineerSignatureBase64.Split(",")[1]),
+                            Print = inspectionTable.EngineerPrint,
+                            SignatoryType = "Engineer",
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.Signatures.Add(engineerSignatureEntity);
+                        await _context.SaveChangesAsync();
+                        inspectionTable.EngineerSignatureID = engineerSignatureEntity.SignatureID;
                     }
 
-                    await _context.SaveChangesAsync();
+                    // Insert Branch Manager Signature
+                    if (!string.IsNullOrEmpty(inspectionTable.BranchManagerSignatureBase64))
+                    {
+                        var branchManagerSignatureEntity = new Signature
+                        {
+                            SignatureID = Guid.NewGuid(),
+                            SignatureImage = Convert.FromBase64String(inspectionTable.BranchManagerSignatureBase64.Split(",")[1]),
+                            Print = inspectionTable.BranchManagerPrint,
+                            SignatoryType = "BranchManager",
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.Signatures.Add(branchManagerSignatureEntity);
+                        await _context.SaveChangesAsync();
+                        inspectionTable.BranchManagerSignatureID = branchManagerSignatureEntity.SignatureID;
+                    }
 
+                    _context.InspectionTables.Add(inspectionTable);
+                    await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
-                    _logger.LogInformation("Inspection sheet created successfully with ID: {InspectionID}", inspectionTable.InspectionID);
                 }
                 catch (Exception ex)
                 {
@@ -152,6 +166,7 @@ namespace FCDBApp.Services
                 }
             }
         }
+
 
         public async Task UpdateInspectionSheetAsync(InspectionTable inspectionTable)
         {

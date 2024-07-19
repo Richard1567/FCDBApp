@@ -7,17 +7,34 @@ namespace FCDBApp.Models
 {
     public class InspectionTable
     {
+        [Key]
         public Guid InspectionID { get; set; }
+
+        [Required]
         public string Branch { get; set; }
+
+        [Required]
         public string VehicleReg { get; set; }
+
+        [Required]
         public string VehicleType { get; set; }
+
         public int Odometer { get; set; }
+
+        [Required]
         public DateTime InspectionDate { get; set; }
+
         public DateTime NextInspectionDue { get; set; }
+
         public DateTime SubmissionTime { get; set; }
+
+        [Required]
         public int InspectionTypeID { get; set; }
+
         public int? SiteID { get; set; }
+
         public string PassFailStatus { get; set; }
+
         public ICollection<InspectionDetails> Details { get; set; } = new List<InspectionDetails>();
 
         // Foreign keys to Signatures
@@ -25,6 +42,24 @@ namespace FCDBApp.Models
 
         public Guid? BranchManagerSignatureID { get; set; }
 
+        // These fields will not be mapped to the database
+        [NotMapped]
+        public Signature EngineerSignature { get; set; }
+
+        [NotMapped]
+        public Signature BranchManagerSignature { get; set; }
+
+        [NotMapped]
+        public string EngineerSignatureBase64 { get; set; }
+
+        [NotMapped]
+        public string BranchManagerSignatureBase64 { get; set; }
+
+        [NotMapped]
+        public string EngineerPrint { get; set; }
+
+        [NotMapped]
+        public string BranchManagerPrint { get; set; }
     }
 
     public class InspectionDetails
