@@ -16,6 +16,7 @@ namespace FCDBApp.Models
         public DbSet<InspectionType> InspectionTypes { get; set; }
         public DbSet<JobCard> JobCards { get; set; }
         public DbSet<PartUsed> PartsUsed { get; set; }
+        public DbSet<PartsList> PartsList { get; set; }
         public DbSet<Site> Sites { get; set; }
         public DbSet<Document> Documents { get; set; }
         public DbSet<DocumentCategory> DocumentCategories { get; set; }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using FCDBApp.Models;
@@ -65,6 +66,9 @@ namespace FCDBApi.Pages.InspectionSheets
                 return NotFound();
             }
 
+            var engineerSignature = await FetchSignatureAsync(inspection.EngineerSignatureID);
+            var branchManagerSignature = await FetchSignatureAsync(inspection.BranchManagerSignatureID);
+
             var data = new InspectionTableDto
             {
                 InspectionID = inspection.InspectionID,
@@ -84,13 +88,38 @@ namespace FCDBApi.Pages.InspectionSheets
                     InspectionItemID = d.InspectionItemID,
                     Result = d.Result,
                     Comments = d.Comments
-                }).ToList()
+                }).ToList(),
+                EngineerSignatureID = inspection.EngineerSignatureID,
+                EngineerSignature = engineerSignature,
+                BranchManagerSignatureID = inspection.BranchManagerSignatureID,
+                BranchManagerSignature = branchManagerSignature
             };
 
-            var filePath = _exportHandler.GenerateInspectionReport(data);
+            var filePath = await _exportHandler.GenerateInspectionReportAsync(inspectionId);
             var fileBytes = System.IO.File.ReadAllBytes(filePath);
 
             return File(fileBytes, "application/pdf", Path.GetFileName(filePath));
+        }
+
+        private async Task<SignatureDto> FetchSignatureAsync(Guid? signatureId)
+        {
+            if (signatureId == null)
+            {
+                return null;
+            }
+
+            var signature = await _context.Signatures
+                .Where(s => s.SignatureID == signatureId)
+                .Select(s => new SignatureDto
+                {
+                    SignatureID = s.SignatureID,
+                    Print = s.Print,
+                    SignatureImage = s.SignatureImage,
+                    SignatoryType = s.SignatoryType
+                })
+                .FirstOrDefaultAsync();
+
+            return signature;
         }
 
         private static string CombineNotes(ICollection<InspectionDetailsDto> details)

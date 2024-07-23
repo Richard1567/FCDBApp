@@ -11,7 +11,7 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form method="post">
+        <form method="post" onsubmit="handleFormSubmit(event)">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="form-group">
@@ -57,9 +57,15 @@
             </div>
 
             <div class="form-group">
-                <label asp-for="JobCard.Time" class="control-label"></label>
-                <input asp-for="JobCard.Time" class="form-control" type="time" />
-                <span asp-validation-for="JobCard.Time" class="text-danger"></span>
+                <label asp-for="JobCard.StartTime" class="control-label">Start Time</label>
+                <input asp-for="JobCard.StartTime" class="form-control" type="time" />
+                <span asp-validation-for="JobCard.StartTime" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="JobCard.EndTime" class="control-label">End Time</label>
+                <input asp-for="JobCard.EndTime" class="form-control" type="time" />
+                <span asp-validation-for="JobCard.EndTime" class="text-danger"></span>
             </div>
 
             <div class="form-group">
@@ -75,13 +81,20 @@
                     <div class="form-group part-used-item">
                         <div>
                             <label asp-for="PartsUsed[i].Name" class="control-label"></label>
-                            <input asp-for="PartsUsed[i].Name" class="form-control" />
+                            <select asp-for="PartsUsed[i].Name" class="form-control parts-dropdown">
+                                <option value="">Select a part</option>
+                                @foreach (var part in Model.PartsList)
+                                {
+                                    <option value="@part.Name" data-part-number="@part.PartNumber">@part.Name</option>
+                                }
+                                <option value="__add_new__">Add New Part</option>
+                            </select>
                             <span asp-validation-for="PartsUsed[i].Name" class="text-danger"></span>
                         </div>
 
                         <div>
                             <label asp-for="PartsUsed[i].PartNumber" class="control-label"></label>
-                            <input asp-for="PartsUsed[i].PartNumber" class="form-control" />
+                            <input asp-for="PartsUsed[i].PartNumber" class="form-control part-number" readonly />
                             <span asp-validation-for="PartsUsed[i].PartNumber" class="text-danger"></span>
                         </div>
 
@@ -93,7 +106,10 @@
 
                         <div>
                             <label asp-for="PartsUsed[i].Category" class="control-label"></label>
-                            <input asp-for="PartsUsed[i].Category" class="form-control" />
+                            <select asp-for="PartsUsed[i].Category" class="form-control">
+                                <option value="Warranty">Warranty</option>
+                                <option value="Non-Conformance">Non-Conformance</option>
+                            </select>
                             <span asp-validation-for="PartsUsed[i].Category" class="text-danger"></span>
                         </div>
 
@@ -107,6 +123,32 @@
             <input type="hidden" asp-for="JobCard.RowVersion" /> <!-- Include RowVersion -->
             <button type="button" id="addPartButton" class="btn btn-secondary">Add Part</button>
 
+            <h4>Engineer Signature</h4>
+            <div class="form-group">
+                <label asp-for="EngineerPrint" class="control-label"></label>
+                <input asp-for="EngineerPrint" class="form-control" />
+                <span asp-validation-for="EngineerPrint" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label for="engineerSignaturePad" class="control-label">Engineer Signature</label>
+                <canvas id="engineerSignaturePad" class="signature-pad"></canvas>
+                <button type="button" class="btn btn-secondary" onclick="clearSignature('engineerSignaturePad')">Clear</button>
+                <input type="hidden" id="EngineerSignature" name="EngineerSignature" />
+            </div>
+
+            <h4>Branch Manager Signature</h4>
+            <div class="form-group">
+                <label asp-for="BranchManagerPrint" class="control-label"></label>
+                <input asp-for="BranchManagerPrint" class="form-control" />
+                <span asp-validation-for="BranchManagerPrint" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label for="branchManagerSignaturePad" class="control-label">Branch Manager Signature</label>
+                <canvas id="branchManagerSignaturePad" class="signature-pad"></canvas>
+                <button type="button" class="btn btn-secondary" onclick="clearSignature('branchManagerSignaturePad')">Clear</button>
+                <input type="hidden" id="BranchManagerSignature" name="BranchManagerSignature" />
+            </div>
+
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div>
@@ -114,44 +156,100 @@
     </div>
 </div>
 
+<!-- Add New Part Modal -->
+<div class="modal fade" id="addPartModal" tabindex="-1" role="dialog" aria-labelledby="addPartModalTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPartModalTitle">Add New Part</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addPartForm">
+                    <div class="form-group">
+                        <label for="newPartName">Name</label>
+                        <input type="text" class="form-control" id="newPartName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPartNumber">Part Number</label>
+                        <input type="text" class="form-control" id="newPartNumber">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="saveNewPartButton">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2/dist/signature_pad.min.js"></script>
     <script type="text/javascript">
         document.getElementById('addPartButton').addEventListener('click', function () {
             var container = document.getElementById('partsUsedContainer');
             var index = container.querySelectorAll('.part-used-item').length;
             var jobCardID = '@Model.JobCard.JobCardID';
             var template = `
-                        <div class="form-group part-used-item">
-                            <div>
-                                <label for="PartsUsed_${index}__Name" class="control-label">Name</label>
-                                <input class="form-control" type="text" id="PartsUsed_${index}__Name" name="PartsUsed[${index}].Name">
-                            </div>
-                            <div>
-                                <label for="PartsUsed_${index}__PartNumber" class="control-label">Part Number</label>
-                                <input class="form-control" type="text" id="PartsUsed_${index}__PartNumber" name="PartsUsed[${index}].PartNumber">
-                            </div>
-                            <div>
-                                <label for="PartsUsed_${index}__Quantity" class="control-label">Quantity</label>
-                                <input class="form-control" type="number" id="PartsUsed_${index}__Quantity" name="PartsUsed[${index}].Quantity">
-                            </div>
-                            <div>
-                                <label for="PartsUsed_${index}__Category" class="control-label">Category</label>
-                                <input class="form-control" type="text" id="PartsUsed_${index}__Category" name="PartsUsed[${index}].Category">
-                            </div>
-                            <input type="hidden" id="PartsUsed_${index}__PartUsedID" name="PartsUsed[${index}].PartUsedID" value="${newGuid()}">
-                            <input type="hidden" id="PartsUsed_${index}__JobCardID" name="PartsUsed[${index}].JobCardID" value="${jobCardID}">
-                            <button type="button" class="btn btn-danger remove-part-button">Remove</button>
-                        </div>
-                    `;
+                                        <div class="form-group part-used-item">
+                                            <div>
+                                                <label for="PartsUsed_${index}__Name" class="control-label">Name</label>
+                                                <select class="form-control parts-dropdown" id="PartsUsed_${index}__Name" name="PartsUsed[${index}].Name">
+                                                    <option value="">Select a part</option>
+        @foreach (var part in Model.PartsList)
+        {
+                                                                <option value="@part.Name" data-part-number="@part.PartNumber">@part.Name</option>
+        }
+                                                    <option value="__add_new__">Add New Part</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label for="PartsUsed_${index}__PartNumber" class="control-label">Part Number</label>
+                                                <input class="form-control part-number" type="text" id="PartsUsed_${index}__PartNumber" name="PartsUsed[${index}].PartNumber" readonly>
+                                            </div>
+                                            <div>
+                                                <label for="PartsUsed_${index}__Quantity" class="control-label">Quantity</label>
+                                                <input class="form-control" type="number" id="PartsUsed_${index}__Quantity" name="PartsUsed[${index}].Quantity">
+                                            </div>
+                                            <div>
+                                                <label for="PartsUsed_${index}__Category" class="control-label">Category</label>
+                                                <select class="form-control" id="PartsUsed_${index}__Category" name="PartsUsed[${index}].Category">
+                                                    <option value="Warranty">Warranty</option>
+                                                    <option value="Non-Conformance">Non-Conformance</option>
+                                                </select>
+                                            </div>
+                                            <input type="hidden" id="PartsUsed_${index}__PartUsedID" name="PartsUsed[${index}].PartUsedID" value="${newGuid()}">
+                                            <input type="hidden" id="PartsUsed_${index}__JobCardID" name="PartsUsed[${index}].JobCardID" value="${jobCardID}">
+                                            <button type="button" class="btn btn-danger remove-part-button">Remove</button>
+                                        </div>
+                                    `;
             container.insertAdjacentHTML('beforeend', template);
             addRemoveButtonEvent();
+            addDropdownChangeEvent();
         });
 
         function addRemoveButtonEvent() {
             document.querySelectorAll('.remove-part-button').forEach(button => {
                 button.addEventListener('click', function () {
                     this.closest('.part-used-item').remove();
+                });
+            });
+        }
+
+        function addDropdownChangeEvent() {
+            document.querySelectorAll('.parts-dropdown').forEach(dropdown => {
+                dropdown.addEventListener('change', function () {
+                    if (this.value === "__add_new__") {
+                        $('#addPartModal').modal('show');
+                        return;
+                    }
+                    var partNumberInput = this.closest('.part-used-item').querySelector('.part-number');
+                    var selectedOption = this.options[this.selectedIndex];
+                    partNumberInput.value = selectedOption.getAttribute('data-part-number');
                 });
             });
         }
@@ -163,7 +261,52 @@
             });
         }
 
-        // Initialize remove buttons event
+        // Initialize remove buttons and dropdown change events
         addRemoveButtonEvent();
+        addDropdownChangeEvent();
+
+        var engineerSignaturePad = new SignaturePad(document.getElementById('engineerSignaturePad'));
+        var branchManagerSignaturePad = new SignaturePad(document.getElementById('branchManagerSignaturePad'));
+
+        function clearSignature(padId) {
+            if (padId === 'engineerSignaturePad') {
+                engineerSignaturePad.clear();
+            } else if (padId === 'branchManagerSignaturePad') {
+                branchManagerSignaturePad.clear();
+            }
+        }
+
+        function handleFormSubmit(event) {
+            document.getElementById('EngineerSignature').value = engineerSignaturePad.toDataURL();
+            document.getElementById('BranchManagerSignature').value = branchManagerSignaturePad.toDataURL();
+        }
+
+        document.getElementById('saveNewPartButton').addEventListener('click', function () {
+            var newPartName = document.getElementById('newPartName').value;
+            var newPartNumber = document.getElementById('newPartNumber').value;
+
+            if (newPartName === "") {
+                alert("Part name is required.");
+                return;
+            }
+
+            var newPart = {
+                PartsListID: newGuid(),
+                Name: newPartName,
+                PartNumber: newPartNumber
+            };
+
+            // Add the new part to the parts list in the dropdowns
+            document.querySelectorAll('.parts-dropdown').forEach(dropdown => {
+                var option = document.createElement('option');
+                option.value = newPart.Name;
+                option.setAttribute('data-part-number', newPart.PartNumber);
+                option.text = newPart.Name;
+                dropdown.add(option);
+            });
+
+            // Close the modal
+            $('#addPartModal').modal('hide');
+        });
     </script>
 }

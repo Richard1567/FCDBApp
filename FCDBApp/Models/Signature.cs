@@ -17,10 +17,9 @@
     public class SignatureDto
     {
         public Guid SignatureID { get; set; }
+        public string Print { get; set; }
         public byte[] SignatureImage { get; set; }
         public string SignatoryType { get; set; }
-        public string Print { get; set; }
-        public DateTime CreatedAt { get; set; }
     }
 
 

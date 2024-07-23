@@ -78,7 +78,7 @@ namespace FCDBApp.Controllers
             if (id != jobCard.JobCardID)
             {
                 _logger.LogWarning("JobCard ID mismatch: {Id} != {JobCardId}", id, jobCard.JobCardID);
-                return BadRequest();
+                return BadRequest("JobCard ID mismatch.");
             }
 
             if (!ModelState.IsValid)
@@ -104,6 +104,7 @@ namespace FCDBApp.Controllers
                 return NotFound();
             }
 
+            // Update existing JobCard properties
             existingJobCard.JobNo = jobCard.JobNo;
             existingJobCard.Site = jobCard.Site;
             existingJobCard.Engineer = jobCard.Engineer;
@@ -116,17 +117,21 @@ namespace FCDBApp.Controllers
             existingJobCard.SubmissionTime = jobCard.SubmissionTime;
             existingJobCard.RowVersion = jobCard.RowVersion;
 
+            // Handle PartsUsed
             var incomingParts = jobCard.PartsUsed ?? new List<PartUsed>();
             var existingParts = existingJobCard.PartsUsed.ToList();
 
+            // Remove parts not in the incoming list
             var partsToRemove = existingParts.Where(e => !incomingParts.Any(i => i.PartUsedID == e.PartUsedID)).ToList();
             _context.PartsUsed.RemoveRange(partsToRemove);
 
+            // Add or update parts
             foreach (var incomingPart in incomingParts)
             {
                 var existingPart = existingParts.FirstOrDefault(e => e.PartUsedID == incomingPart.PartUsedID);
                 if (existingPart != null)
                 {
+                    // Update existing part
                     existingPart.Name = incomingPart.Name;
                     existingPart.PartNumber = incomingPart.PartNumber;
                     existingPart.Quantity = incomingPart.Quantity;
@@ -135,6 +140,7 @@ namespace FCDBApp.Controllers
                 }
                 else
                 {
+                    // Add new part
                     incomingPart.JobCardID = jobCard.JobCardID;
                     _context.PartsUsed.Add(incomingPart);
                 }
@@ -161,6 +167,7 @@ namespace FCDBApp.Controllers
 
             return NoContent();
         }
+
 
 
         private bool DoesJobCardExist(Guid id)

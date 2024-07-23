@@ -26,33 +26,44 @@ namespace FCDBApp.Services
                                             .ThenInclude(d => d.Item)
                                             .ToListAsync();
 
-            return inspections.Select(i => new InspectionTableDto
+            var inspectionTableDtos = new List<InspectionTableDto>();
+
+            foreach (var inspection in inspections)
             {
-                InspectionID = i.InspectionID,
-                Branch = i.Branch,
-                VehicleReg = i.VehicleReg,
-                VehicleType = i.VehicleType,
-                Odometer = i.Odometer,
-                InspectionDate = i.InspectionDate,
-                NextInspectionDue = i.NextInspectionDue,
-                SubmissionTime = i.SubmissionTime,
-                InspectionTypeID = i.InspectionTypeID,
-                SiteID = i.SiteID,
-                PassFailStatus = i.PassFailStatus,
-                Details = i.Details
-                            .Where(d => d.Item.InspectionTypeIndicator.Contains(i.InspectionTypeID.ToString()))
-                            .Select(d => new InspectionDetailsDto
-                            {
-                                InspectionDetailID = d.InspectionDetailID,
-                                InspectionID = d.InspectionID,
-                                InspectionItemID = d.InspectionItemID,
-                                Result = d.Result,
-                                Comments = d.Comments
-                            }).ToList(),
-                EngineerSignatureID = i.EngineerSignatureID,
-                BranchManagerSignatureID = i.BranchManagerSignatureID
-            }).ToList();
+                var engineerSignature = await FetchSignatureAsync(inspection.EngineerSignatureID);
+                var branchManagerSignature = await FetchSignatureAsync(inspection.BranchManagerSignatureID);
+
+                inspectionTableDtos.Add(new InspectionTableDto
+                {
+                    InspectionID = inspection.InspectionID,
+                    Branch = inspection.Branch,
+                    VehicleReg = inspection.VehicleReg,
+                    VehicleType = inspection.VehicleType,
+                    Odometer = inspection.Odometer,
+                    InspectionDate = inspection.InspectionDate,
+                    NextInspectionDue = inspection.NextInspectionDue,
+                    SubmissionTime = inspection.SubmissionTime,
+                    InspectionTypeID = inspection.InspectionTypeID,
+                    SiteID = inspection.SiteID,
+                    PassFailStatus = inspection.PassFailStatus,
+                    Details = inspection.Details
+                                .Where(d => d.Item.InspectionTypeIndicator.Contains(inspection.InspectionTypeID.ToString()))
+                                .Select(d => new InspectionDetailsDto
+                                {
+                                    InspectionDetailID = d.InspectionDetailID,
+                                    InspectionID = d.InspectionID,
+                                    InspectionItemID = d.InspectionItemID,
+                                    Result = d.Result,
+                                    Comments = d.Comments
+                                }).ToList(),
+                    EngineerSignature = engineerSignature,
+                    BranchManagerSignature = branchManagerSignature
+                });
+            }
+
+            return inspectionTableDtos;
         }
+
 
         public async Task<InspectionTable> GetInspectionSheetByIdAsync(Guid id)
         {
@@ -367,6 +378,9 @@ namespace FCDBApp.Services
 
             var filteredDetails = inspection.Details.Where(d => validItemIds.Contains(d.InspectionItemID)).ToList();
 
+            var engineerSignature = await FetchSignatureAsync(inspection.EngineerSignatureID);
+            var branchManagerSignature = await FetchSignatureAsync(inspection.BranchManagerSignatureID);
+
             return new InspectionTableDto
             {
                 InspectionID = inspection.InspectionID,
@@ -388,10 +402,11 @@ namespace FCDBApp.Services
                     Result = d.Result,
                     Comments = d.Comments
                 }).ToList(),
-                EngineerSignatureID = inspection.EngineerSignatureID,
-                BranchManagerSignatureID = inspection.BranchManagerSignatureID
+                EngineerSignature = engineerSignature,
+                BranchManagerSignature = branchManagerSignature
             };
         }
+
 
         public async Task<Signature> GetSignatureByIdAsync(Guid? signatureId)
         {
@@ -409,5 +424,32 @@ namespace FCDBApp.Services
                 .Where(s => signatureIds.Contains(s.SignatureID))
                 .ToListAsync();
         }
+        private async Task<SignatureDto> FetchSignatureAsync(Guid? signatureId)
+        {
+            if (signatureId == null)
+            {
+                _logger.LogWarning("Signature ID is null.");
+                return null;
+            }
+
+            var signature = await _context.Signatures
+                .Where(s => s.SignatureID == signatureId)
+                .Select(s => new SignatureDto
+                {
+                    SignatureID = s.SignatureID,
+                    Print = s.Print,
+                    SignatureImage = s.SignatureImage,
+                    SignatoryType = s.SignatoryType
+                })
+                .FirstOrDefaultAsync();
+
+            if (signature == null)
+            {
+                _logger.LogWarning($"No signature found for SignatureID: {signatureId}");
+            }
+
+            return signature;
+        }
+
     }
 }

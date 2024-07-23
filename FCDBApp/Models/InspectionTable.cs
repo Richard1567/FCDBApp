@@ -120,19 +120,18 @@ namespace FCDBApp.Models
         public int Odometer { get; set; }
         public DateTime InspectionDate { get; set; }
         public DateTime NextInspectionDue { get; set; }
-        public DateTime SubmissionTime { get; set; } = DateTime.Now;
+        public DateTime SubmissionTime { get; set; }
+        public string PassFailStatus { get; set; }
         public int InspectionTypeID { get; set; }
         public int? SiteID { get; set; }
-        public ICollection<InspectionDetailsDto> Details { get; set; } = new List<InspectionDetailsDto>();
-        public string PassFailStatus { get; set; }
         public Guid? EngineerSignatureID { get; set; }
-        public string EngineerPrint { get; set; }
-        public byte[] EngineerSignatureImage { get; set; }
-        public Guid? BranchManagerSignatureID { get; set; }
-        public string BranchManagerPrint { get; set; }
-        public byte[] BranchManagerSignatureImage { get; set; }
 
+        public Guid? BranchManagerSignatureID { get; set; }
+        public SignatureDto EngineerSignature { get; set; }
+        public SignatureDto BranchManagerSignature { get; set; }
+        public List<InspectionDetailsDto> Details { get; set; }
     }
+
 
     public class InspectionDetailsDto
     {

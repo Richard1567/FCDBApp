@@ -1,0 +1,36 @@
+﻿@page
+@model FCDBApi.Pages.PartsUsed.ManagePartsUsedModel
+
+@{
+    ViewData["Title"] = "Parts Used by Engineer";
+}
+
+<h1>Parts Used by Engineer</h1>
+
+@foreach (var engineer in Model.PartsUsedByEngineer)
+{
+    <h2>@engineer.Engineer</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Part Name</th>
+                <th>Part Number</th>
+                <th>Quantity</th>
+                <th>Job Reg No</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var part in engineer.PartsUsed)
+            {
+                <tr>
+                    <td>@part.PartName</td>
+                    <td>@part.PartNumber</td>
+                    <td>@part.Quantity</td>
+                    <td>@part.JobRegNo</td>
+                    <td>@part.JobDate.ToString("yyyy-MM-dd")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

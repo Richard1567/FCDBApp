@@ -43,7 +43,6 @@
             <th>
                 @Html.DisplayNameFor(model => model.JobCard[0].PartsUsed)
             </th>
-
             <th></th>
         </tr>
     </thead>
@@ -70,7 +69,7 @@
                     @Html.DisplayFor(modelItem => item.Odometer)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.Date)
+                    @item.Date.ToString("dd/MM/yyyy")
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.Time)
@@ -96,9 +95,28 @@
                 <td>
                     <a asp-page="./Edit" asp-route-id="@item.JobCardID">Edit</a> |
                     <a asp-page="./Details" asp-route-id="@item.JobCardID">Details</a> |
-                    <a asp-page="./Delete" asp-route-id="@item.JobCardID">Delete</a>
+                    <a asp-page="./Delete" asp-route-id="@item.JobCardID">Delete</a> |
+                    <button class="btn btn-secondary" onclick="exportJobCardToPdf('@item.JobCardID')">Export to PDF</button>
                 </td>
             </tr>
         }
     </tbody>
 </table>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script type="text/javascript">
+        async function exportJobCardToPdf(jobCardId) {
+            const response = await fetch(`/api/JobCardExport/ExportToPdf/${jobCardId}`);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `JobCard_${jobCardId}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+}

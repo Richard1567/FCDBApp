@@ -75,6 +75,30 @@
                 }
             </ul>
         </dd>
+        <dt class="col-sm-3">
+            Engineer Print
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.EngineerSignature.Print)
+        </dd>
+        <dt class="col-sm-3">
+            Engineer Signature
+        </dt>
+        <dd class="col-sm-9">
+            <img src="data:image/png;base64,@Convert.ToBase64String(Model.EngineerSignature.SignatureImage)" alt="Engineer Signature" />
+        </dd>
+        <dt class="col-sm-3">
+            Branch Manager Print
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.BranchManagerSignature.Print)
+        </dd>
+        <dt class="col-sm-3">
+            Branch Manager Signature
+        </dt>
+        <dd class="col-sm-9">
+            <img src="data:image/png;base64,@Convert.ToBase64String(Model.BranchManagerSignature.SignatureImage)" alt="Branch Manager Signature" />
+        </dd>
     </dl>
 
     <form method="post">

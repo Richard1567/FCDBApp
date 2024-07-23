@@ -1,0 +1,88 @@
+﻿@page
+@model FCDBApi.Pages.Settings.ManagePartsListModel
+@{
+    ViewData["Title"] = "Manage Parts List";
+}
+
+<h1>Manage Parts List</h1>
+<button id="addPartButton" class="btn btn-primary">Add New Part</button>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Part Number</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var part in Model.PartsList)
+        {
+            <tr>
+                <td>@part.Name</td>
+                <td>@part.PartNumber</td>
+                <td>
+                    <button type="button" class="btn btn-secondary editPartButton" data-id="@part.PartsListID">Edit</button>
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@part.PartsListID" style="display:inline">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Add/Edit Part Modal -->
+<div class="modal fade" id="partModal" tabindex="-1" role="dialog" aria-labelledby="partModalTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="partModalTitle">Add Part</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="partForm" method="post" asp-page-handler="SavePart">
+                    <div class="form-group">
+                        <label for="partName">Name</label>
+                        <input type="text" class="form-control" id="partName" name="Part.Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="partNumber">Part Number</label>
+                        <input type="text" class="form-control" id="partNumber" name="Part.PartNumber">
+                    </div>
+                    <input type="hidden" id="partId" name="Part.PartsListID">
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            $('#addPartButton').click(function () {
+                $('#partModalTitle').text('Add Part');
+                $('#partForm')[0].reset();
+                $('#partId').val('');
+                $('#partModal').modal('show');
+            });
+
+            $('.editPartButton').click(function () {
+                var id = $(this).data('id');
+                $.get('@Url.Page("ManagePartsList", "EditPart")', { id: id }, function (data) {
+                    $('#partModalTitle').text('Edit Part');
+                    $('#partId').val(data.partsListID);
+                    $('#partName').val(data.name);
+                    $('#partNumber').val(data.partNumber);
+                    $('#partModal').modal('show');
+                });
+            });
+        });
+    </script>
+}

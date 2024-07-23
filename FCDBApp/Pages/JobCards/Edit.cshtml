@@ -124,28 +124,28 @@
             var container = document.getElementById('partsUsedContainer');
             var index = container.querySelectorAll('.part-used-item').length;
             var template = `
-                        <div class="form-group part-used-item">
-                            <div>
-                                <label for="JobCard_PartsUsed_${index}__Name" class="control-label">Name</label>
-                                <input class="form-control" type="text" id="JobCard_PartsUsed_${index}__Name" name="JobCard.PartsUsed[${index}].Name">
-                            </div>
-                            <div>
-                                <label for="JobCard_PartsUsed_${index}__PartNumber" class="control-label">Part Number</label>
-                                <input class="form-control" type="text" id="JobCard_PartsUsed_${index}__PartNumber" name="JobCard.PartsUsed[${index}].PartNumber">
-                            </div>
-                            <div>
-                                <label for="JobCard_PartsUsed_${index}__Quantity" class="control-label">Quantity</label>
-                                <input class="form-control" type="number" id="JobCard_PartsUsed_${index}__Quantity" name="JobCard.PartsUsed[${index}].Quantity">
-                            </div>
-                            <div>
-                                <label for="JobCard_PartsUsed_${index}__Category" class="control-label">Category</label>
-                                <input class="form-control" type="text" id="JobCard_PartsUsed_${index}__Category" name="JobCard.PartsUsed[${index}].Category">
-                            </div>
-                            <input type="hidden" id="JobCard_PartsUsed_${index}__PartUsedID" name="JobCard.PartsUsed[${index}].PartUsedID" value="${newGuid()}">
-                            <input type="hidden" id="JobCard_PartsUsed_${index}__JobCardID" name="JobCard.PartsUsed[${index}].JobCardID" value="@Model.JobCard.JobCardID">
-                            <button type="button" class="btn btn-danger remove-part-button">Remove</button>
-                        </div>
-                    `;
+                <div class="form-group part-used-item">
+                    <div>
+                        <label for="JobCard_PartsUsed_${index}__Name" class="control-label">Name</label>
+                        <input class="form-control" type="text" id="JobCard_PartsUsed_${index}__Name" name="JobCard.PartsUsed[${index}].Name">
+                    </div>
+                    <div>
+                        <label for="JobCard_PartsUsed_${index}__PartNumber" class="control-label">Part Number</label>
+                        <input class="form-control" type="text" id="JobCard_PartsUsed_${index}__PartNumber" name="JobCard.PartsUsed[${index}].PartNumber">
+                    </div>
+                    <div>
+                        <label for="JobCard_PartsUsed_${index}__Quantity" class="control-label">Quantity</label>
+                        <input class="form-control" type="number" id="JobCard_PartsUsed_${index}__Quantity" name="JobCard.PartsUsed[${index}].Quantity">
+                    </div>
+                    <div>
+                        <label for="JobCard_PartsUsed_${index}__Category" class="control-label">Category</label>
+                        <input class="form-control" type="text" id="JobCard_PartsUsed_${index}__Category" name="JobCard.PartsUsed[${index}].Category">
+                    </div>
+                    <input type="hidden" id="JobCard_PartsUsed_${index}__PartUsedID" name="JobCard.PartsUsed[${index}].PartUsedID" value="${newGuid()}">
+                    <input type="hidden" id="JobCard_PartsUsed_${index}__JobCardID" name="JobCard.PartsUsed[${index}].JobCardID" value="@Model.JobCard.JobCardID">
+                    <button type="button" class="btn btn-danger remove-part-button">Remove</button>
+                </div>
+            `;
             container.insertAdjacentHTML('beforeend', template);
             addRemoveButtonEvent();
         });
@@ -185,10 +185,7 @@
                 }
             });
 
-            // Ensure RowVersion is correctly included and handled as base64
-            if (jsonObject.RowVersion) {
-                jsonObject.RowVersion = btoa(atob(jsonObject.RowVersion));
-            }
+            console.log('Prepared JSON Object:', jsonObject); // Debugging: log the prepared JSON object
 
             var jobCardId = '@Model.JobCard.JobCardID';
             var url = `/api/JobCard/${jobCardId}`;
@@ -242,10 +239,6 @@
         }
 
         addRemoveButtonEvent();
+
     </script>
 }
-
-
-
-
-

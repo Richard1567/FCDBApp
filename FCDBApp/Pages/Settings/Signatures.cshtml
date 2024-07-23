@@ -1,0 +1,35 @@
+﻿@page
+@model FCDBApi.Pages.SignaturesModel
+@{
+    ViewData["Title"] = "Manage Signatures";
+}
+
+<h1>Manage Signatures</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Print</th>
+            <th>Type</th>
+            <th>Preview</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var signature in Model.Signatures)
+        {
+            <tr>
+                <td>@signature.Print</td>
+                <td>@signature.SignatoryType</td>
+                <td>
+                    <img src="data:image/png;base64,@Convert.ToBase64String(signature.SignatureImage)" alt="Signature" style="max-height: 100px;" />
+                </td>
+                <td>
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@signature.SignatureID" onsubmit="return confirm('Are you sure you want to delete this signature?');">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

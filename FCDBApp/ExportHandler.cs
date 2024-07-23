@@ -15,6 +15,8 @@ using System.Linq;
 using FCDBApp.Models;
 using Microsoft.AspNetCore.Mvc;
 using iText.IO.Image;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 public class ExportHandler
 {
@@ -28,7 +30,7 @@ public class ExportHandler
         _logger = logger;
     }
 
-    public string GenerateInspectionReport(InspectionTableDto data)
+    public async Task<string> GenerateInspectionReportAsync(Guid inspectionId)
     {
         try
         {
@@ -39,6 +41,66 @@ public class ExportHandler
                 _logger.LogError("Template not found in database.");
                 throw new FileNotFoundException("Template not found in database.");
             }
+
+            var inspection = await _context.InspectionTables
+                .Include(i => i.Details)
+                .FirstOrDefaultAsync(i => i.InspectionID == inspectionId);
+
+            if (inspection == null)
+            {
+                _logger.LogWarning($"Inspection with ID {inspectionId} not found.");
+                return null;
+            }
+
+            _logger.LogInformation($"Retrieved Inspection: ID={inspection.InspectionID}, EngineerSignatureID={inspection.EngineerSignatureID}, BranchManagerSignatureID={inspection.BranchManagerSignatureID}");
+
+            var engineerSignature = await FetchSignatureAsync(inspection.EngineerSignatureID);
+            var branchManagerSignature = await FetchSignatureAsync(inspection.BranchManagerSignatureID);
+
+            if (engineerSignature != null)
+            {
+                _logger.LogInformation($"Fetched Engineer Signature: ID={engineerSignature.SignatureID}, Print={engineerSignature.Print}");
+            }
+            else
+            {
+                _logger.LogWarning("Engineer signature not found.");
+            }
+
+            if (branchManagerSignature != null)
+            {
+                _logger.LogInformation($"Fetched Branch Manager Signature: ID={branchManagerSignature.SignatureID}, Print={branchManagerSignature.Print}");
+            }
+            else
+            {
+                _logger.LogWarning("Branch manager signature not found.");
+            }
+
+            var data = new InspectionTableDto
+            {
+                InspectionID = inspection.InspectionID,
+                Branch = inspection.Branch,
+                VehicleReg = inspection.VehicleReg,
+                VehicleType = inspection.VehicleType,
+                Odometer = inspection.Odometer,
+                InspectionDate = inspection.InspectionDate,
+                NextInspectionDue = inspection.NextInspectionDue,
+                SubmissionTime = inspection.SubmissionTime,
+                InspectionTypeID = inspection.InspectionTypeID,
+                SiteID = inspection.SiteID,
+                PassFailStatus = inspection.PassFailStatus,
+                Details = inspection.Details.Select(d => new InspectionDetailsDto
+                {
+                    InspectionDetailID = d.InspectionDetailID,
+                    InspectionID = d.InspectionID,
+                    InspectionItemID = d.InspectionItemID,
+                    Result = d.Result,
+                    Comments = d.Comments
+                }).ToList(),
+                EngineerSignatureID = inspection.EngineerSignatureID,
+                EngineerSignature = engineerSignature,
+                BranchManagerSignatureID = inspection.BranchManagerSignatureID,
+                BranchManagerSignature = branchManagerSignature
+            };
 
             var filledTemplatePath = System.IO.Path.Combine(_outputPath, $"inspection_filled_{data.InspectionID}.pdf");
 
@@ -69,10 +131,41 @@ public class ExportHandler
         }
     }
 
+    private async Task<SignatureDto> FetchSignatureAsync(Guid? signatureId)
+    {
+        if (signatureId == null)
+        {
+            _logger.LogWarning("Signature ID is null.");
+            return null;
+        }
+
+        var signature = await _context.Signatures
+            .Where(s => s.SignatureID == signatureId)
+            .Select(s => new SignatureDto
+            {
+                SignatureID = s.SignatureID,
+                Print = s.Print,
+                SignatureImage = s.SignatureImage,
+                SignatoryType = s.SignatoryType
+            })
+            .FirstOrDefaultAsync();
+
+        if (signature == null)
+        {
+            _logger.LogWarning($"No signature found for SignatureID: {signatureId}");
+        }
+
+        return signature;
+    }
+
     private void FillTemplate(iText.Layout.Document document, PdfAcroForm form, IDictionary<string, PdfFormField> fields, InspectionTableDto data)
     {
         _logger.LogInformation($"Populating fields for inspection ID: {data.InspectionID}");
         _logger.LogInformation($"Pass/Fail Status: {data.PassFailStatus}");
+
+        // Log the signature IDs
+        _logger.LogInformation($"EngineerSigID: {data.EngineerSignatureID}");
+        _logger.LogInformation($"BranchSigID: {data.BranchManagerSignatureID}");
 
         // Replace these fields
         ReplaceTextBoxWithText(document, form, fields, "branch", data.Branch, 12);
@@ -87,12 +180,12 @@ public class ExportHandler
         DrawPassFailRectangle(document, data.PassFailStatus);
 
         // Populate these fields
-        SetFormField(fields, "engineerprint", data.EngineerPrint);
-        AddSignatureImage(document, fields, "engineersign", data.EngineerSignatureImage);
+        SetFormField(fields, "engineerprint", data.EngineerSignature?.Print);
+        AddSignatureImage(document, fields, "engineersign", data.EngineerSignature?.SignatureImage);
 
         // Populate these fields
-        SetFormField(fields, "branchprint", data.BranchManagerPrint);
-        AddSignatureImage(document, fields, "branchsign", data.BranchManagerSignatureImage);
+        SetFormField(fields, "branchprint", data.BranchManagerSignature?.Print);
+        AddSignatureImage(document, fields, "branchsign", data.BranchManagerSignature?.SignatureImage);
 
         // Determine which set of fields to fill based on InspectionTypeID
         string prefix;
@@ -136,10 +229,11 @@ public class ExportHandler
 
     private void SetFormField(IDictionary<string, PdfFormField> fields, string fieldName, string value)
     {
-        if (fields.TryGetValue(fieldName, out var field))
+        _logger.LogInformation($"Setting field '{fieldName}' with value: {value}");
+
+        if (fields.ContainsKey(fieldName))
         {
-            _logger.LogInformation($"Setting field '{fieldName}' with value: {value}");
-            field.SetValue(value);
+            fields[fieldName].SetValue(value);
         }
         else
         {
@@ -149,54 +243,32 @@ public class ExportHandler
 
     private void AddSignatureImage(iText.Layout.Document document, IDictionary<string, PdfFormField> fields, string fieldName, byte[] signatureImage)
     {
-        if (fields.TryGetValue(fieldName, out var field))
-        {
-            _logger.LogInformation($"Setting signature for field '{fieldName}'");
-            if (signatureImage != null && signatureImage.Length > 0)
-            {
-                var rect = field.GetWidgets()[0].GetRectangle().ToRectangle();
-                var signatureImageData = ImageDataFactory.Create(signatureImage);
-                var signatureImageObject = new Image(signatureImageData)
-                    .SetFixedPosition(rect.GetX(), rect.GetY(), rect.GetWidth())
-                    .ScaleAbsolute(rect.GetWidth(), rect.GetHeight());
-                document.Add(signatureImageObject);
-                _logger.LogInformation($"Added signature image to field '{fieldName}'");
-            }
-            else
-            {
-                _logger.LogWarning($"Signature image for field '{fieldName}' is null or empty");
-            }
-        }
-        else
-        {
-            _logger.LogWarning($"Field '{fieldName}' not found in the form.");
-        }
-    }
+        _logger.LogInformation($"Setting signature for field '{fieldName}'");
 
-    private void ReplaceTextBoxWithText(iText.Layout.Document document, PdfAcroForm form, IDictionary<string, PdfFormField> fields, string fieldName, string value, float fontSize)
-    {
-        if (fields.TryGetValue(fieldName, out var field))
+        if (signatureImage == null || signatureImage.Length == 0)
         {
-            var widget = field.GetWidgets()[0];
-            var rect = widget.GetRectangle().ToRectangle();
+            _logger.LogWarning($"Signature image for field '{fieldName}' is null or empty");
+            return;
+        }
 
-            _logger.LogInformation($"Replacing text box field '{fieldName}' with value: {value}");
+        var pdfDoc = document.GetPdfDocument();
+        var form = PdfAcroForm.GetAcroForm(pdfDoc, false);
+
+        if (fields.TryGetValue(fieldName, out var signatureField))
+        {
+            var signatureWidget = signatureField.GetWidgets()[0];
+            var signatureRect = signatureWidget.GetRectangle().ToRectangle();
 
             // Remove the form field
             form.RemoveField(fieldName);
 
-            if (!string.IsNullOrEmpty(value))
-            {
-                // Add the text at the position of the form field
-                var paragraph = new Paragraph(value)
-                    .SetFixedPosition(rect.GetX(), rect.GetY(), rect.GetWidth())
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetVerticalAlignment(VerticalAlignment.MIDDLE) // Center vertically
-                    .SetFontSize(fontSize); // Use the specified font size
-                document.Add(paragraph);
+            var signatureImageData = ImageDataFactory.Create(signatureImage);
+            var signatureImageObject = new Image(signatureImageData)
+                .SetFixedPosition(signatureRect.GetX(), signatureRect.GetY(), signatureRect.GetWidth())
+                .ScaleAbsolute(signatureRect.GetWidth(), signatureRect.GetHeight());
+            document.Add(signatureImageObject);
 
-                _logger.LogInformation($"Replaced text box field '{fieldName}' with value: {value}");
-            }
+            _logger.LogInformation($"Added signature image for field '{fieldName}'");
         }
         else
         {
@@ -212,18 +284,20 @@ public class ExportHandler
             return;
         }
 
-        float x, y, width = 28.35f, height = 14.17f;
+        float x, y, width = 28.35f, height = 14.17f; // 1cm = 28.35 points, 0.5cm = 14.17 points
+
+        // LibreOffice origin is top-left, so we need to adjust the y-coordinate
         float pageHeight = document.GetPdfDocument().GetFirstPage().GetPageSize().GetHeight();
 
         if (passFailStatus.Equals("Fail", StringComparison.OrdinalIgnoreCase))
         {
             x = 12.96f * 28.35f;
-            y = pageHeight - (20.60f * 28.35f + height);
+            y = pageHeight - (20.60f * 28.35f + height); // Adjust y-coordinate
         }
         else if (passFailStatus.Equals("Pass", StringComparison.OrdinalIgnoreCase))
         {
             x = 14.00f * 28.35f;
-            y = pageHeight - (20.60f * 28.35f + height);
+            y = pageHeight - (20.60f * 28.35f + height); // Adjust y-coordinate
         }
         else
         {
@@ -303,8 +377,39 @@ public class ExportHandler
             }
         }
 
+
         await _context.SaveChangesAsync();
 
         return new JsonResult(new { Message = "Signature captured and associated successfully." }) { StatusCode = 200 };
+    }
+    private void ReplaceTextBoxWithText(iText.Layout.Document document, PdfAcroForm form, IDictionary<string, PdfFormField> fields, string fieldName, string value, float fontSize)
+    {
+        if (fields.TryGetValue(fieldName, out var field))
+        {
+            var widget = field.GetWidgets()[0];
+            var rect = widget.GetRectangle().ToRectangle();
+
+            _logger.LogInformation($"Replacing text box field '{fieldName}' with value: {value}");
+
+            // Remove the form field
+            form.RemoveField(fieldName);
+
+            if (!string.IsNullOrEmpty(value))
+            {
+                // Add the text at the position of the form field
+                var paragraph = new Paragraph(value)
+                    .SetFixedPosition(rect.GetX(), rect.GetY(), rect.GetWidth())
+                    .SetTextAlignment(TextAlignment.CENTER)
+                    .SetVerticalAlignment(VerticalAlignment.MIDDLE) // Center vertically
+                    .SetFontSize(fontSize); // Use the specified font size
+                document.Add(paragraph);
+
+                _logger.LogInformation($"Replaced text box field '{fieldName}' with value: {value}");
+            }
+        }
+        else
+        {
+            _logger.LogWarning($"Field '{fieldName}' not found in the form.");
+        }
     }
 }
