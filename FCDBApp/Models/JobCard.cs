@@ -12,6 +12,7 @@ namespace FCDBApp.Models
         public Guid JobCardID { get; set; }
         public string? JobNo { get; set; } = string.Empty;
         public string Site { get; set; } = string.Empty;
+        public int? SiteID { get; set; }
         public string Engineer { get; set; } = string.Empty;
         public string? RegNo { get; set; }
         public string? CustOrderNo { get; set; }

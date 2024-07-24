@@ -22,8 +22,31 @@
 
             <div class="form-group">
                 <label asp-for="JobCard.Site" class="control-label"></label>
-                <input asp-for="JobCard.Site" class="form-control" />
+                @if (Model.Sites != null && Model.Sites.Any())
+                {
+                    <select asp-for="JobCard.Site" class="form-control site-dropdown" id="siteDropdown" onchange="handleSiteChange(event)">
+                        <option value="">-- Select Site --</option>
+                        @foreach (var site in Model.Sites)
+                        {
+                            <option value="@site.SiteName">@site.SiteName</option>
+                        }
+                        <option value="AddNew">Add New</option>
+                    </select>
+                }
+                else
+                {
+                    <select asp-for="JobCard.Site" class="form-control" id="siteDropdown" onchange="handleSiteChange(event)">
+                        <option value="">No sites available</option>
+                        <option value="AddNew">Add New</option>
+                    </select>
+                }
                 <span asp-validation-for="JobCard.Site" class="text-danger"></span>
+            </div>
+
+            <div class="form-group new-site-input" style="display:none;">
+                <label asp-for="NewSiteName" class="control-label"></label>
+                <input asp-for="NewSiteName" class="form-control" />
+                <span asp-validation-for="NewSiteName" class="text-danger"></span>
             </div>
 
             <div class="form-group">
@@ -107,8 +130,9 @@
                         <div>
                             <label asp-for="PartsUsed[i].Category" class="control-label"></label>
                             <select asp-for="PartsUsed[i].Category" class="form-control">
-                                <option value="Warranty">Warranty</option>
-                                <option value="Non-Conformance">Non-Conformance</option>
+                                <option value="V.O.R">V.O.R</option>
+                                <option value="Urgent">Urgent</option>
+                                <option value="Next Service">Next Service</option>
                             </select>
                             <span asp-validation-for="PartsUsed[i].Category" class="text-danger"></span>
                         </div>
@@ -156,36 +180,6 @@
     </div>
 </div>
 
-<!-- Add New Part Modal -->
-<div class="modal fade" id="addPartModal" tabindex="-1" role="dialog" aria-labelledby="addPartModalTitle" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addPartModalTitle">Add New Part</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="addPartForm">
-                    <div class="form-group">
-                        <label for="newPartName">Name</label>
-                        <input type="text" class="form-control" id="newPartName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="newPartNumber">Part Number</label>
-                        <input type="text" class="form-control" id="newPartNumber">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" id="saveNewPartButton">Save</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2/dist/signature_pad.min.js"></script>
@@ -195,38 +189,39 @@
             var index = container.querySelectorAll('.part-used-item').length;
             var jobCardID = '@Model.JobCard.JobCardID';
             var template = `
-                                        <div class="form-group part-used-item">
-                                            <div>
-                                                <label for="PartsUsed_${index}__Name" class="control-label">Name</label>
-                                                <select class="form-control parts-dropdown" id="PartsUsed_${index}__Name" name="PartsUsed[${index}].Name">
-                                                    <option value="">Select a part</option>
+                        <div class="form-group part-used-item">
+                            <div>
+                                <label for="PartsUsed_${index}__Name" class="control-label">Name</label>
+                                <select class="form-control parts-dropdown" id="PartsUsed_${index}__Name" name="PartsUsed[${index}].Name">
+                                    <option value="">Select a part</option>
         @foreach (var part in Model.PartsList)
         {
-                                                                <option value="@part.Name" data-part-number="@part.PartNumber">@part.Name</option>
+                                            <option value="@part.Name" data-part-number="@part.PartNumber">@part.Name</option>
         }
-                                                    <option value="__add_new__">Add New Part</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label for="PartsUsed_${index}__PartNumber" class="control-label">Part Number</label>
-                                                <input class="form-control part-number" type="text" id="PartsUsed_${index}__PartNumber" name="PartsUsed[${index}].PartNumber" readonly>
-                                            </div>
-                                            <div>
-                                                <label for="PartsUsed_${index}__Quantity" class="control-label">Quantity</label>
-                                                <input class="form-control" type="number" id="PartsUsed_${index}__Quantity" name="PartsUsed[${index}].Quantity">
-                                            </div>
-                                            <div>
-                                                <label for="PartsUsed_${index}__Category" class="control-label">Category</label>
-                                                <select class="form-control" id="PartsUsed_${index}__Category" name="PartsUsed[${index}].Category">
-                                                    <option value="Warranty">Warranty</option>
-                                                    <option value="Non-Conformance">Non-Conformance</option>
-                                                </select>
-                                            </div>
-                                            <input type="hidden" id="PartsUsed_${index}__PartUsedID" name="PartsUsed[${index}].PartUsedID" value="${newGuid()}">
-                                            <input type="hidden" id="PartsUsed_${index}__JobCardID" name="PartsUsed[${index}].JobCardID" value="${jobCardID}">
-                                            <button type="button" class="btn btn-danger remove-part-button">Remove</button>
-                                        </div>
-                                    `;
+                                    <option value="__add_new__">Add New Part</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="PartsUsed_${index}__PartNumber" class="control-label">Part Number</label>
+                                <input class="form-control part-number" type="text" id="PartsUsed_${index}__PartNumber" name="PartsUsed[${index}].PartNumber" readonly>
+                            </div>
+                            <div>
+                                <label for="PartsUsed_${index}__Quantity" class="control-label">Quantity</label>
+                                <input class="form-control" type="number" id="PartsUsed_${index}__Quantity" name="PartsUsed[${index}].Quantity">
+                            </div>
+                            <div>
+                                <label for="PartsUsed_${index}__Category" class="control-label">Category</label>
+                                <select class="form-control" id="PartsUsed_${index}__Category" name="PartsUsed[${index}].Category">
+                                    <option value="V.O.R">V.O.R</option>
+                                    <option value="Urgent">Urgent</option>
+                                    <option value="Next Service">Next Service</option>
+                                </select>
+                            </div>
+                            <input type="hidden" id="PartsUsed_${index}__PartUsedID" name="PartsUsed[${index}].PartUsedID" value="${newGuid()}">
+                            <input type="hidden" id="PartsUsed_${index}__JobCardID" name="PartsUsed[${index}].JobCardID" value="${jobCardID}">
+                            <button type="button" class="btn btn-danger remove-part-button">Remove</button>
+                        </div>
+                    `;
             container.insertAdjacentHTML('beforeend', template);
             addRemoveButtonEvent();
             addDropdownChangeEvent();
@@ -277,36 +272,24 @@
         }
 
         function handleFormSubmit(event) {
+            // Prevent the default form submission
+            event.preventDefault();
+
+            // Save signatures
             document.getElementById('EngineerSignature').value = engineerSignaturePad.toDataURL();
             document.getElementById('BranchManagerSignature').value = branchManagerSignaturePad.toDataURL();
+
+            // Confirm data in console, then submit form
+            event.target.submit();
         }
 
-        document.getElementById('saveNewPartButton').addEventListener('click', function () {
-            var newPartName = document.getElementById('newPartName').value;
-            var newPartNumber = document.getElementById('newPartNumber').value;
-
-            if (newPartName === "") {
-                alert("Part name is required.");
-                return;
+        function handleSiteChange(event) {
+            const newSiteDiv = document.querySelector('.new-site-input');
+            if (event.target.value === "AddNew") {
+                newSiteDiv.style.display = 'block';
+            } else {
+                newSiteDiv.style.display = 'none';
             }
-
-            var newPart = {
-                PartsListID: newGuid(),
-                Name: newPartName,
-                PartNumber: newPartNumber
-            };
-
-            // Add the new part to the parts list in the dropdowns
-            document.querySelectorAll('.parts-dropdown').forEach(dropdown => {
-                var option = document.createElement('option');
-                option.value = newPart.Name;
-                option.setAttribute('data-part-number', newPart.PartNumber);
-                option.text = newPart.Name;
-                dropdown.add(option);
-            });
-
-            // Close the modal
-            $('#addPartModal').modal('hide');
-        });
+        }
     </script>
 }

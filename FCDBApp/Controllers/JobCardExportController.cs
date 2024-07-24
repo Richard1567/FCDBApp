@@ -12,7 +12,6 @@ using Microsoft.Extensions.Logging;
 using iText.Layout.Element;
 using iText.Layout.Properties;
 using iText.Kernel.Geom;
-using iText.Kernel.Pdf.Canvas;
 using iText.IO.Image;
 using iText.Layout;
 
@@ -68,34 +67,34 @@ namespace FCDBApi.Controllers
 
                 var fields = form.GetAllFormFields();
 
-                SetField(fields, "site", jobCard.Site);
-                SetField(fields, "reg", jobCard.RegNo);
-                SetField(fields, "odometer", jobCard.Odometer.ToString());
-                SetField(fields, "date", jobCard.Date.ToString("dd/MM/yyyy"));
-                SetField(fields, "engineer", jobCard.Engineer);
-                SetField(fields, "customerno", jobCard.CustOrderNo);
-                SetField(fields, "jobno", jobCard.JobNo);
-                SetField(fields, "time", jobCard.Time);
+                SetField(fields, "site", jobCard.Site, 12);
+                SetField(fields, "reg", jobCard.RegNo, 12);
+                SetField(fields, "odometer", jobCard.Odometer.ToString(), 12);
+                SetField(fields, "date", jobCard.Date.ToString("dd/MM/yyyy"), 12);
+                SetField(fields, "engineer", jobCard.Engineer, 12);
+                SetField(fields, "customerno", jobCard.CustOrderNo, 12);
+                SetField(fields, "jobno", jobCard.JobNo, 12);
+                SetField(fields, "time", jobCard.Time, 12);
 
                 var document = new iText.Layout.Document(pdfDocument);
 
                 if (engineerSignature != null)
                 {
                     AddSignatureImage(document, fields, "engineersign", engineerSignature.SignatureImage);
-                    SetField(fields, "engineerdate", $"{engineerSignature.Print} {DateTime.Now:dd/MM/yyyy}");
+                    SetField(fields, "engineerdate", $"{engineerSignature.Print} {DateTime.Now:dd/MM/yyyy}", 10);
                 }
 
                 if (branchManagerSignature != null)
                 {
                     AddSignatureImage(document, fields, "branchsign", branchManagerSignature.SignatureImage);
-                    SetField(fields, "branchdate", $"{branchManagerSignature.Print} {DateTime.Now:dd/MM/yyyy}");
+                    SetField(fields, "branchdate", $"{branchManagerSignature.Print} {DateTime.Now:dd/MM/yyyy}", 10);
                 }
 
                 // Calculate the y-position for the description
-                float descriptionY = 550; // Adjusted y-position based on your template
+                float descriptionY = 590; // Adjusted y-position based on your template
                 document.Add(new Paragraph(jobCard.Description)
                     .SetFontSize(12)
-                    .SetFixedPosition(50, descriptionY, 500)); // Adjust x, y, and width as needed
+                    .SetFixedPosition(20, descriptionY, 550)); // Adjust x, y, and width as needed
 
                 // Calculate the y-position for the parts used table
                 float partsTableY = descriptionY - 100; // Adjust as needed based on your layout
@@ -127,11 +126,14 @@ namespace FCDBApi.Controllers
             }
         }
 
-        private void SetField(IDictionary<string, PdfFormField> fields, string fieldName, string value)
+        private void SetField(IDictionary<string, PdfFormField> fields, string fieldName, string value, float fontSize)
         {
             if (fields.ContainsKey(fieldName))
             {
-                fields[fieldName].SetValue(value);
+                var field = fields[fieldName];
+                field.SetValue(value);
+                field.SetJustification(TextAlignment.CENTER); // Center the text
+                field.SetFontSize(fontSize); // Set the font size
             }
             else
             {

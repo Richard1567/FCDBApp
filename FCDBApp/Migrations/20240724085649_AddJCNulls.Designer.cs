@@ -4,6 +4,7 @@ using FCDBApp.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FCDBApi.Migrations
 {
     [DbContext(typeof(InspectionContext))]
-    partial class InspectionContextModelSnapshot : ModelSnapshot
+    [Migration("20240724085649_AddJCNulls")]
+    partial class AddJCNulls
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -893,9 +896,6 @@ namespace FCDBApi.Migrations
                     b.Property<string>("Site")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("SiteID")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("SubmissionTime")
                         .HasColumnType("datetime2");

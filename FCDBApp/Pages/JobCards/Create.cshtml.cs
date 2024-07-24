@@ -41,10 +41,16 @@ namespace FCDBApi.Pages.JobCards
 
         public List<PartsList> PartsList { get; set; } = new List<PartsList>();
 
+        public List<Site> Sites { get; set; } = new List<Site>();
+
+        [BindProperty]
+        public string? NewSiteName { get; set; } = string.Empty;
+
         public async Task<IActionResult> OnGetAsync()
         {
             _logger.LogInformation("Job Card creation page accessed.");
             PartsList = await _context.PartsList.ToListAsync(); // Fetch the parts list
+            Sites = await _context.Sites.ToListAsync(); // Fetch the sites list
             return Page();
         }
 
@@ -73,6 +79,27 @@ namespace FCDBApi.Pages.JobCards
             JobCard.PartsUsed = PartsUsed;
             JobCard.Time = CalculateTimeDifference(JobCard.StartTime, JobCard.EndTime);
             _logger.LogInformation($"JobCardID: {JobCard.JobCardID}, SubmissionTime: {JobCard.SubmissionTime}, Time: {JobCard.Time}");
+
+            var selectedSite = Request.Form["JobCard.Site"].FirstOrDefault();
+            if (selectedSite == "AddNew")
+            {
+                if (!string.IsNullOrWhiteSpace(NewSiteName))
+                {
+                    var newSite = new Site { SiteName = NewSiteName };
+                    _context.Sites.Add(newSite);
+                    await _context.SaveChangesAsync();
+                    JobCard.Site = newSite.SiteName;
+                }
+                else
+                {
+                    ModelState.AddModelError("JobCard.Site", "New site name cannot be empty.");
+                    return Page();
+                }
+            }
+            else
+            {
+                JobCard.Site = selectedSite;
+            }
 
             if (!string.IsNullOrEmpty(EngineerSignature))
             {
